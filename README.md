@@ -19,10 +19,10 @@ See [example](https://laurensharwood.github.io/)
 # Automatically make maps of your routes using a cron schedule
 
 ## Files: 
-```get_garmin.sh```, ```get_garmin.py```, and ```RUNfile.csv``` must be in the same folder   
+```activities.sh```, ```activities.py```, and ```RUNfile.csv``` must be in the same folder   
 
-```get_garmin.sh```  <b>is called by cron</b>-- which has lines to activate a virtual environment (venv) with necessary packages installed, then execute ```get_garmin.py``` from that active venv.     
-```get_garmin.py``` reads user input parameters from ```RUNfile.csv``` to:  
+```activities.sh```  <b>is called by cron</b>-- which has lines to activate a virtual environment (venv) with necessary packages installed, then execute ```activities.py``` from that active venv.     
+```activities.py``` reads user input parameters from ```RUNfile.csv``` to:  
 * download running and biking activities for <b>user input</b> number of days before today.  
 If there are files to download:  
 * appends files to archive csv  
