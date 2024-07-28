@@ -1,0 +1,3 @@
+parameter,days before today,route heatmap ,"3d plot bounds: Xmin, Xmax, Ymin, Ymax",heatmap calendar stat
+value,3,,"34.4, 34.6, -119.8, -119.6",miles
+,,,,ascent
