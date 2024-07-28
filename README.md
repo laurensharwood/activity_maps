@@ -16,9 +16,9 @@ See [example](https://laurensharwood.github.io/)
 
 
 
-# Automatically make maps of your routes using a cron schedule
+## Optionally, set a cron schedule to automatically make maps of your routes 
 
-## Files: 
+### Files: 
 ```activities.sh```, ```activities.py```, and ```RUNfile.csv``` must be in the same folder   
 
 ```activities.sh```  <b>is called by cron</b>-- which has lines to activate a virtual environment (venv) with necessary packages installed, then execute ```activities.py``` from that active venv.     
@@ -28,7 +28,7 @@ If there are files to download:
 * appends files to archive csv  
 * creates maps
 
-## Setup steps: DO ONCE
+### Setup steps: DO ONCE
 <b>Save your Garmin login credentials</b> by entering the following commands in your terminal:   
 ~~~
 export GARMIN_EMAIL = {your garmin username/email}
