@@ -35,10 +35,10 @@ export GARMIN_EMAIL = {your garmin username/email}
 export GARMIN_PWD = {your garmin pwd}
 ~~~
 
-<b>Set execute permissions</b> for get_garmin.sh and get_garmin.py:    
+<b>Set execute permissions</b> for activities.sh and activities.py:    
 ~~~
-chmod +x get_garmin.py
-chmod +x get_garmin.sh
+chmod +x activities.py
+chmod +x activities.sh
 ~~~
 
 <b>Create cron task:</b>   
@@ -47,9 +47,9 @@ chmod +x get_garmin.sh
 ~~~
 min hour day-of-month month day-of-week {command}  
 ~~~
-ex) every day (```*``` == all) at 10:00am run get_garmin.sh & don't send that email    
+ex) every day (```*``` == all) at 10:00am run activities.sh & don't send that email    
 ~~~
-00 10 * * * ~/get_garmin.sh >/dev/null 2>&1  
+00 10 * * * ~/activities.sh >/dev/null 2>&1  
 ~~~
 3. Save:
    * ctrl+X (to escape editing session)
