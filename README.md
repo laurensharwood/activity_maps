@@ -28,7 +28,7 @@ If there are files to download:
 * appends files to archive csv  
 * creates maps
 
-### Setup steps: DO ONCE
+### Cron setup: Do once
 <b>Save your Garmin login credentials</b> by entering the following commands in your terminal:   
 ~~~
 export GARMIN_EMAIL = {your garmin username/email}
@@ -58,6 +58,7 @@ ex) every day (```*``` == all) at 10:00am run activities.sh & don't send that em
 
 5. Print active tasks: ```crontab -l``` to ensure it was created
 
+### PostgreSQL setup: Do once
 <b>Create postgreSQL archive database</b> in psql
 ~~~
 CREATE DATABASE garmin_activities; 
