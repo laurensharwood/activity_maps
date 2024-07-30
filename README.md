@@ -64,17 +64,21 @@ ex) every day (```*``` == all) at 10:00am run activities.sh & don't send that em
 CREATE DATABASE garmin_activities; 
 ~~~
 
+        CREATE TABLE gpx_runs ();
+        CREATE TABLE gpx_bikes ();
+
+
 <b>Create postgreSQL archive tables</b> in Python
 ~~~
 import psycopg2
 
 table_column_dict = {
     ## gpx waypoints 
-    "gpx_runs": "(filename CHAR(18) NOT NULL, date TIMESTAMP NOT NULL, lat FLOAT NOT NULL, lon FLOAT NOT NULL, ele FLOAT NOT NULL, speed FLOAT NOT NULL)",
-    "gpx_bikes": "(filename CHAR(18) NOT NULL, date TIMESTAMP NOT NULL, lat FLOAT NOT NULL, lon FLOAT NOT NULL, ele FLOAT NOT NULL, speed FLOAT NOT NULL)",
+    "gpx_runs": "(date TIMESTAMP PRIMARY KEY, filename CHAR(18) NOT NULL, lat FLOAT NOT NULL, lon FLOAT NOT NULL, ele FLOAT NOT NULL, speed FLOAT NOT NULL)",
+    "gpx_bikes": "(date TIMESTAMP PRIMARY KEY, filename CHAR(18) NOT NULL, lat FLOAT NOT NULL, lon FLOAT NOT NULL, ele FLOAT NOT NULL, speed FLOAT NOT NULL)",
     ## tcx activity stats & tracks 
-    "run_pts": "(date TIMESTAMP UNIQUE NOT NULL, filename CHAR(18) NOT NULL, lon FLOAT NOT NULL, lat FLOAT NOT NULL, distance FLOAT NOT NULL, elevation FLOAT NOT NULL, hr FLOAT, cadence FLOAT)",
-    "bike_pts": "(date TIMESTAMP UNIQUE NOT NULL, filename CHAR(18) NOT NULL, lon FLOAT NOT NULL, lat FLOAT NOT NULL, distance FLOAT NOT NULL, elevation FLOAT NOT NULL, hr FLOAT)",
+    "run_pts": "(date TIMESTAMP PRIMARY KEY, filename CHAR(18) NOT NULL, lon FLOAT NOT NULL, lat FLOAT NOT NULL, distance FLOAT NOT NULL, elevation FLOAT NOT NULL, hr FLOAT, cadence FLOAT)",
+    "bike_pts": "(date TIMESTAMP PRIMARY KEY, filename CHAR(18) NOT NULL, lon FLOAT NOT NULL, lat FLOAT NOT NULL, distance FLOAT NOT NULL, elevation FLOAT NOT NULL, hr FLOAT)",
     "run_stats": "(filename CHAR(18) PRIMARY KEY NOT NULL, start TIMESTAMP UNIQUE NOT NULL, distance FLOAT NOT NULL, duration FLOAT NOT NULL, ascent FLOAT NOT NULL, avg_speed FLOAT NOT NULL, hr_avg FLOAT, hr_max FLOAT)",
     "bike_stats": "(filename CHAR(18) PRIMARY KEY NOT NULL, start TIMESTAMP UNIQUE NOT NULL, distance FLOAT NOT NULL, duration FLOAT NOT NULL, ascent FLOAT NOT NULL, avg_speed FLOAT NOT NULL, hr_avg FLOAT, hr_max FLOAT)",
 }
