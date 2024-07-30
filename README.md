@@ -64,10 +64,6 @@ ex) every day (```*``` == all) at 10:00am run activities.sh & don't send that em
 CREATE DATABASE garmin_activities; 
 ~~~
 
-        CREATE TABLE gpx_runs ();
-        CREATE TABLE gpx_bikes ();
-
-
 <b>Create postgreSQL archive tables</b> in Python
 ~~~
 import psycopg2
