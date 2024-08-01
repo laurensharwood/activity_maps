@@ -1,22 +1,25 @@
 # Instructions to create maps of your Garmin Connect activity data 
+See [example](https://laurensharwood.github.io/)        
 
 Run ```activities.ipynb``` notebook from [Google Colab](https://colab.research.google.com/):       
 
-* Upload ```activities.ipynb``` and ```activities.py``` to the same folder in Google Drive.
-  * ```activities.ipynb``` imports functions, or uses code, from ```activities.py```.
-* To open: right-click ```activities.ipynb``` > Open With > Google Colaboratory.
-* To run a given cell: click that cell's arrow or select the cell then press <i>Shift+Enter</i>. 
+* Your information from ```RUNfile.csv``` is read by ```activities.ipynb``` 
+* ```activities.ipynb``` executes functions from ```activities.py```.
 
 ![workflow](garminworkflow.png)
 
+<b>To open ```activities.ipynb```:</b> right-click ```activities.ipynb``` > Open With > Google Colaboratory.  
+<b>To run a given cell:</b> click that cell's arrow or select the cell then press <i>Shift+Enter</i>.   
 
-See [example](https://laurensharwood.github.io/)        
+<b>Steps:</b>   
+1.  Fill out your information in ```RUNfile.csv```
+2. Upload ```activities.ipynb```, ```activities.py```, and ```RUNfile.csv``` to the same folder in Google Drive.
+3. Run the first cell to connect to your Google Drive storage
+4. Run the next cell to download, parse, and map your Garmin activity files.   
 
 
 
-
-
-## Optionally, set a cron schedule to automatically make maps of your routes 
+## Optionally, set a cron schedule (with Linux or Mac os) to automatically make maps of your routes 
 
 ### Files: 
 ```activities.sh```, ```activities.py```, and ```RUNfile.csv``` must be in the same folder   

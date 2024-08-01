@@ -250,7 +250,7 @@ def switch(api, option, out_dir, startdate, today):
                 with open(os.path.join(out_dir, f"{str(activity_start)}.csv"), "wb") as fb:
                     fb.write(csv_data)
 
-def get_garmin(num_days, project_dir, file_types):
+def get_garmin(num_days, project_dir, file_types, email, password):
     '''
     navigate into project directory (location of script) & run from there
     file_types: all options = [".tcx", ".gpx", ".csv", ".zip"]
@@ -275,7 +275,7 @@ def get_garmin(num_days, project_dir, file_types):
         menu_options = {
             option: f"Download activities data by date from '{startdate.isoformat()}' to '{today.isoformat()}'",
             "q": "Exit"}
-        if not api:
+        if (not api and email != "nan"):
             try:
                 email = os.getenv("GARMIN_EMAIL")
                 password = os.getenv("GARMIN_PWD")
@@ -287,6 +287,7 @@ def get_garmin(num_days, project_dir, file_types):
         if api:
             switch(api, option, out_dir, startdate, today)
         else:
+            tokenstore = os.getenv("GARMINTOKENS") or "~/.garminconnect"
             api = init_api(email, password, tokenstore)
     if len(os.listdir(out_dir)) == 0:
         os.rmdir(out_dir)
@@ -322,7 +323,7 @@ def parse_tcx(data_dir):
     df['name'] = [os.path.basename(f) for f in df.index]
     df['miles'] = [f / 1609.34 for f in df['distance']]
     df['minutes'] = [f / 60 for f in df['duration']]
-    df['start'] = df['date'].astype('datetime64[ns]')
+    df['start'] = df['start'].astype('datetime64[ns]')
     df.sort_values('start').dropna().to_csv(os.path.join(data_dir, 'runTCX_' + date + '.csv'))
     df['start'] = [str(i) for i in df['start']]
     return df, df_bike
@@ -520,20 +521,24 @@ def cal_heatmap(df, col_name, mpl_cmap, out_name):
 def main():
     ## parse user input params / instead of sourse config_file.sh
     df = pd.read_csv(os.path.join(os.getcwd(), 'RUNfile.csv'))
-    days_b4_today = int(df.iloc[:,1][0])
-    act_type = str(df.iloc[:,2][0])
-    min_lon, max_lon, min_lat, max_lat = [float(i) for i in str(df.iloc[:,3][0]).split(", ")]
-    heatmap_cal_stats = [i for i in df.iloc[:,4]]
-    running_fig_dir = str(df.iloc[:,5][0])
- 
-    ## create archive and outut figure directories if they don't exist
+    input_username = str(df['user input'].iloc[0])
+    input_pwd = str(df['user input'].iloc[1])
+    days_b4_today = int(df['user input'].iloc[2])
+    act_type = str(df['user input'].iloc[3])
+    min_lon, max_lon, min_lat, max_lat = [float(i) for i in str(df['user input'].iloc[4]).split(", ")]
+    heatmap_cal_stats = [str(i) for i in str(df['user input'].iloc[5]).split(", ")]
+    running_fig_dir = str(df['user input'].iloc[6])
+    print(running_fig_dir)
+
+    
+    ## create archive and output figure directories if they don't exist
     archive_dir = os.path.join(os.getcwd(), 'garmin_archive')
     if not os.path.exists(archive_dir):
         os.makedirs(archive_dir)
     if not os.path.exists(running_fig_dir):
         os.makedirs(running_fig_dir)
     ## download garmin activity files
-    out_dir =  get_garmin(num_days = days_b4_today, project_dir = os.getcwd(), file_types = [".tcx", ".gpx"])
+    out_dir =  get_garmin(num_days = days_b4_today, project_dir = os.getcwd(), file_types = [".tcx", ".gpx"], email = input_username, password = input_pwd )
 
     ## parse tcx files
     tcx_to_postgres(out_dir, db = 'garmin_activities')
