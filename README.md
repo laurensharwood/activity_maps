@@ -1,35 +1,31 @@
-# Instructions to create maps of your Garmin Connect activity data 
+# Instructions to create maps of your Garmin Connect activity data
+
+
 See [example](https://laurensharwood.github.io/)        
 
-Run ```activities.ipynb``` notebook from [Google Colab](https://colab.research.google.com/):       
 
-* Your information from ```RUNfile.csv``` is read by ```activities.ipynb``` 
-* ```activities.ipynb``` executes functions from ```activities.py```.
+## <b>[Google Colab](https://colab.research.google.com/) Steps:</b>   
+Your information from ```RUNfile.csv``` is read by ```activities.py```, which is executed from ```activities.ipynb```.
+1. <b>Fill out your information</b> in ```RUNfile.csv```. 
+2. <b>Upload</b> ```activities.ipynb```, ```activities.py```, and ```RUNfile.csv``` to the same folder in Google Drive.
+3. <b>To open ```activities.ipynb``` in Google Drive:</b> right-click ```activities.ipynb``` > Open With > Google Colaboratory.  
+4. <b>To run a given cell:</b> click that cell's arrow or select the cell then press <i>Shift+Enter</i>.   
+   * Run the first cell to connect to your Google Drive storage. 
+   * Run the next cell to download, parse, and map your Garmin activity files.   
 
 ![workflow](garminworkflow.png)
 
-<b>To open ```activities.ipynb```:</b> right-click ```activities.ipynb``` > Open With > Google Colaboratory.  
-<b>To run a given cell:</b> click that cell's arrow or select the cell then press <i>Shift+Enter</i>.   
 
-<b>Steps:</b>   
-1.  Fill out your information in ```RUNfile.csv```
-2. Upload ```activities.ipynb```, ```activities.py```, and ```RUNfile.csv``` to the same folder in Google Drive.
-3. Run the first cell to connect to your Google Drive storage
-4. Run the next cell to download, parse, and map your Garmin activity files.   
-
-
-
-## Optionally, set a cron schedule (with Linux or Mac os) to automatically make maps of your routes 
+## Optionally, set a cron schedule to automatically make maps of your routes  (on your Mac or Linux local machine)
 
 ### Files: 
 ```activities.sh```, ```activities.py```, and ```RUNfile.csv``` must be in the same folder   
 
 ```activities.sh```  <b>is called by cron</b>-- which has lines to activate a virtual environment (venv) with necessary packages installed, then execute ```activities.py``` from that active venv.     
 ```activities.py``` reads user input parameters from ```RUNfile.csv``` to:  
-* download running and biking activities for <b>user input</b> number of days before today.  
-If there are files to download:  
-* appends files to archive csv  
-* creates maps
+1. Download running and biking activities for <b>user input</b> number of days before today.  
+2. If there are files to download, append files to archive posgreSQL database. 
+3. If there are files to download, create maps. 
 
 ### Cron setup: Do once
 <b>Save your Garmin login credentials</b> by entering the following commands in your terminal:   
