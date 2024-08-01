@@ -192,26 +192,28 @@ def get_credentials():
 
 
 def init_api(email, password, tokenstore):
-    """Initialize Garmin API with your credentials."""
+    '''
+    Initialize Garmin API with your credentials.
+    '''
     try:
         # if not email or not password:
         #     email, password = get_credentials()
        ## print(f"Trying to login to Garmin Connect using token data from ...\n'{tokenstore}'" )
         garmin = Garmin()
         garmin.login(tokenstore)
-        garth.save("~/.garth")
+        garth.save('~/.garth')
 
     except (FileNotFoundError, GarthHTTPError, GarminConnectAuthenticationError):
         # Session is expired. You'll need to log in again
-       ## print(  "Login tokens not present, login with your Garmin Connect credentials to generate them.\n"  f"They will be stored in '{tokenstore}' for future use.\n")
+       ## print(  Login tokens not present, login with your Garmin Connect credentials to generate them.\n'  f"They will be stored in "{tokenstore}" for future use.\n")
         email, password = get_credentials()
         garmin = Garmin(email, password)
         garmin.login()
-        garth.save("~/.garth")
+        garth.save('~/.garth')
         try:
             garmin = Garmin(email, password)
             garmin.login()
-            garth.save("~/.garth")
+            garth.save('~/.garth')
 
             # Save tokens for next login
             garmin.garth.dump(tokenstore)
@@ -225,35 +227,37 @@ def init_api(email, password, tokenstore):
 ######################################################################
 
 def switch(api, option, out_dir, startdate, today):
-    """Run selected API call."""
+    '''
+    Run selected API call.
+    '''
     if api:
-        activitytype=""
+        activitytype=''
         activities = api.get_activities_by_date(startdate.isoformat(), today.isoformat(), activitytype )
         for activity in activities:
-            activity_id = activity["activityId"]
-            activity_name = activity["activityName"]
-            activity_start = activity["startTimeLocal"].replace(" ", "", -1).replace(":", "", -1).replace("-", "", -1)            
-            if option==".gpx":
+            activity_id = activity['activityId']
+            activity_name = activity['activityName']
+            activity_start = activity['startTimeLocal'].replace(' ', '', -1).replace(':', '', -1).replace('-', '', -1)            
+            if option=='.gpx':
                 gpx_data = api.download_activity( activity_id, dl_fmt=api.ActivityDownloadFormat.GPX)
-                with open(os.path.join(out_dir, f"{str(activity_start)}.gpx"), "wb") as fb:
+                with open(os.path.join(out_dir, f"{str(activity_start)}.gpx"), 'wb') as fb:
                     fb.write(gpx_data)
-            elif option==".tcx":
+            elif option=='.tcx':
                 tcx_data = api.download_activity(activity_id, dl_fmt=api.ActivityDownloadFormat.TCX)
-                with open(os.path.join(out_dir, f"{str(activity_start)}.tcx"), "wb") as fb:
+                with open(os.path.join(out_dir, f"{str(activity_start)}.tcx"), 'wb') as fb:
                     fb.write(tcx_data)
-            elif option==".zip":
+            elif option=='.zip':
                 zip_data = api.download_activity(activity_id, dl_fmt=api.ActivityDownloadFormat.ORIGINAL)
-                with open(os.path.join(out_dir, f"{str(activity_start)}.zip"), "wb") as fb:
+                with open(os.path.join(out_dir, f"{str(activity_start)}.zip"), 'wb') as fb:
                     fb.write(zip_data)
-            elif option== ".csv":
+            elif option== '.csv':
                 csv_data = api.download_activity(activity_id, dl_fmt=api.ActivityDownloadFormat.CSV)
-                with open(os.path.join(out_dir, f"{str(activity_start)}.csv"), "wb") as fb:
+                with open(os.path.join(out_dir, f"{str(activity_start)}.csv"), 'wb') as fb:
                     fb.write(csv_data)
 
 def get_garmin(num_days, project_dir, file_types, email, password):
     '''
     navigate into project directory (location of script) & run from there
-    file_types: all options = [".tcx", ".gpx", ".csv", ".zip"]
+    file_types: all options = ['.tcx', '.gpx', '.csv', '.zip']
     saves activity files into a new folder named today's date (YYYYMMDD) located in the script/project directory
     '''
     ## keep python script in the project directory with archive & out folders
@@ -263,31 +267,31 @@ def get_garmin(num_days, project_dir, file_types, email, password):
 
     today = date.today()
     startdate = today - timedelta(days=int(num_days))
-    YYYYMMDD = today.strftime("%Y%m%d")
+    YYYYMMDD = today.strftime('%Y%m%d')
     out_dir = os.path.join(project_dir, YYYYMMDD)
     print(out_dir)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    garth.save("~/.garth")
+    garth.save('~/.garth')
 
     ## 1) download from garmin
     for option in file_types:
         menu_options = {
             option: f"Download activities data by date from '{startdate.isoformat()}' to '{today.isoformat()}'",
             "q": "Exit"}
-        if (not api and email != "nan"):
+        if (not api and email != 'nan'):
             try:
-                email = os.getenv("GARMIN_EMAIL")
-                password = os.getenv("GARMIN_PWD")
-                tokenstore = os.getenv("GARMINTOKENS") or "~/.garminconnect"
+                email = os.getenv('GARMIN_EMAIL')
+                password = os.getenv('GARMIN_PWD')
+                tokenstore = os.getenv('GARMINTOKENS') or '~/.garminconnect'
             except:
                 email, password = get_credentials()
-            tokenstore = "~/.garminconnect"
+            tokenstore = '~/.garminconnect'
             api = init_api(email, password, tokenstore)
         if api:
             switch(api, option, out_dir, startdate, today)
         else:
-            tokenstore = os.getenv("GARMINTOKENS") or "~/.garminconnect"
+            tokenstore = os.getenv('GARMINTOKENS') or '~/.garminconnect'
             api = init_api(email, password, tokenstore)
     if len(os.listdir(out_dir)) == 0:
         os.rmdir(out_dir)
@@ -303,7 +307,7 @@ def parse_tcx(data_dir):
     function is quick so okay to reparse TCX files -- for next run, add new files to folder
     '''
     date = os.path.basename(data_dir)
-    tcx_files = [i for i in sorted(os.listdir(data_dir)) if i.endswith(".tcx")]
+    tcx_files = [i for i in sorted(os.listdir(data_dir)) if i.endswith('.tcx')]
     print(tcx_files)
     df = pd.DataFrame(columns=['filename', 'start',  'distance', 'duration', 'ascent', 'hr_max', 'hr_avg', 'avg_speed'])
     df_bike = pd.DataFrame(columns=['filename', 'start', 'distance', 'duration', 'ascent', 'hr_max', 'avg_speed'])
@@ -311,9 +315,9 @@ def parse_tcx(data_dir):
         file = open(os.path.join(data_dir, tf), 'r')
         tcx_reader = TCXReader()
         TCXTrackPoint = tcx_reader.read(os.path.join(data_dir, tf))
-        if TCXTrackPoint.activity_type == "Running":
+        if TCXTrackPoint.activity_type == 'Running':
             df.loc[len(df.index)] = [file.name, TCXTrackPoint.start_time, TCXTrackPoint.distance, TCXTrackPoint.duration, TCXTrackPoint.ascent, TCXTrackPoint.hr_max, TCXTrackPoint.hr_avg, TCXTrackPoint.avg_speed]
-        elif TCXTrackPoint.activity_type == "Biking":
+        elif TCXTrackPoint.activity_type == 'Biking':
             df_bike.loc[len(df_bike.index)] = [file.name, TCXTrackPoint.start_time, TCXTrackPoint.duration,
                                                TCXTrackPoint.distance, TCXTrackPoint.ascent, TCXTrackPoint.hr_max,
                                                TCXTrackPoint.avg_speed]
@@ -331,10 +335,10 @@ def parse_tcx(data_dir):
 def parse_gpx(data_dir):
     date = os.path.basename(data_dir)
     pts_df = pd.DataFrame(columns=['date', 'filename', 'lat', 'lon', 'ele', 'speed'])
-    gpx_files = [i for i in sorted(os.listdir(data_dir)) if i.endswith(".gpx")]
+    gpx_files = [i for i in sorted(os.listdir(data_dir)) if i.endswith('.gpx')]
     for fi in gpx_files:
         gpx_file = open(os.path.join(data_dir, fi), 'r')
-        gpx = gpxpy.parse(gpx_file, version="1.1")
+        gpx = gpxpy.parse(gpx_file, version='1.1')
         for track in gpx.tracks:
             for seg in track.segments:
                 for point_no, pt in enumerate(seg.points):
@@ -345,14 +349,14 @@ def parse_gpx(data_dir):
                     elif point_no == 0:
                         speed = 0
                     pts_df.loc[len(pts_df.index)] = [pt.time, fi, pt.latitude, pt.longitude, pt.elevation, speed]
-    pts_df['date'] = [str(i).split("+")[0] for i in pts_df['date']]
-    new_pt_csv = os.path.join(data_dir, "allGPX_" + date + ".csv")
+    pts_df['date'] = [str(i).split('+')[0] for i in pts_df['date']]
+    new_pt_csv = os.path.join(data_dir, 'allGPX_' + date + '.csv')
     pts_df.sort_values('date').to_csv(new_pt_csv)
     return pts_df, new_pt_csv
 
 
 
-def gpx_to_postgres(data_dir, table_name, db="garmin_activities"):
+def gpx_to_postgres(data_dir, table_name, db='garmin_activities'):
     '''
     data_dir  = input directory to put GPX waypoints in
     db = database
@@ -361,13 +365,13 @@ def gpx_to_postgres(data_dir, table_name, db="garmin_activities"):
         CREATE TABLE gpx_bikes (date TIMESTAMP PRIMARY KEY, filename CHAR(18) NOT NULL, lat FLOAT NOT NULL, lon FLOAT NOT NULL, ele FLOAT NOT NULL, speed FLOAT NOT NULL);
     returns list of files that were parsed
     '''
-    gpx_files = [i for i in sorted(os.listdir(data_dir)) if i.endswith(".gpx")]
+    gpx_files = [i for i in sorted(os.listdir(data_dir)) if i.endswith('.gpx')]
     try:
-        conn = psycopg2.connect(database=db, user="postgres", password="", host="localhost", port=5432)
+        conn = psycopg2.connect(database=db, user='postgres', password='', host='localhost', port=5432)
         cur = conn.cursor()
         for fi in gpx_files:
             gpx_file = open(os.path.join(data_dir, fi), 'r')
-            gpx = gpxpy.parse(gpx_file, version="1.1")
+            gpx = gpxpy.parse(gpx_file, version='1.1')
             for track in gpx.tracks:
                 for seg in track.segments:
                     for point_no, pt in enumerate(seg.points):
@@ -379,21 +383,21 @@ def gpx_to_postgres(data_dir, table_name, db="garmin_activities"):
                             speed = 0
                         else:
                             speed = 0
-                        cur.execute("INSERT INTO "+table_name+" (date, filename, lat, lon, ele, speed) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
+                        cur.execute('INSERT INTO '+table_name+' (date, filename, lat, lon, ele, speed) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING',
                                     [pt.time, fi, pt.latitude, pt.longitude, pt.elevation, speed])
         conn.commit()
-        print("Records created successfully")
+        print('Records created successfully')
         conn.close()
         return gpx_files
 
     except (Exception, psycopg2.Error) as error:
-        print("Error while fetching data from PostgreSQL", error)
+        print('Error while fetching data from PostgreSQL', error)
 
     finally:
         if conn:
             cur.close()
             conn.close()
-            print("PostgreSQL connection is closed")
+            print('PostgreSQL connection is closed')
 
 def tcx_to_postgres(data_dir, db='garmin_activities'):
     '''
@@ -405,44 +409,45 @@ def tcx_to_postgres(data_dir, db='garmin_activities'):
 
     ## for PST my start times need to be subtracted by six or seven hours depending on daylight savings
     subtr_hrs = 6
-    tcx_files = [i for i in sorted(os.listdir(data_dir)) if i.endswith(".tcx")]
+    tcx_files = [i for i in sorted(os.listdir(data_dir)) if i.endswith('.tcx')]
     try:
-        conn = psycopg2.connect(database=db, user="postgres", password="", host="localhost", port=5432)
+        conn = psycopg2.connect(database=db, user='postgres', password='', host='localhost', port=5432)
         cur = conn.cursor()
         for tf in tcx_files:
-            file = open(os.path.join(data_dir, tf), "r")
+            file = open(os.path.join(data_dir, tf), 'r')
             tcx_reader = TCXReader()
             exercise = tcx_reader.read(os.path.join(data_dir, tf))
-            if (exercise.activity_type == "Running" and exercise.duration != None):
-                cur.execute("INSERT INTO run_stats (filename, start, distance, duration, ascent, avg_speed, hr_avg, hr_max) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
+            if (exercise.activity_type == 'Running' and exercise.duration != None):
+                cur.execute('INSERT INTO run_stats (filename, start, distance, duration, ascent, avg_speed, hr_avg, hr_max) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING',
                             [tf, exercise.start_time - timedelta(hours=subtr_hrs), exercise.distance, exercise.duration, exercise.ascent, exercise.avg_speed, exercise.hr_avg, exercise.hr_max])
                 for pt_info in exercise.trackpoints:
-                    cur.execute("INSERT INTO run_pts (date, filename, lon, lat, distance, elevation, hr, cadence) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
+                    cur.execute('INSERT INTO run_pts (date, filename, lon, lat, distance, elevation, hr, cadence) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING',
                                 [pt_info.time - timedelta(hours=subtr_hrs), tf, pt_info.longitude, pt_info.latitude, pt_info.distance,  pt_info.elevation, pt_info.hr_value, pt_info.cadence])
-            elif (exercise.activity_type == "Biking" and exercise.duration != None):
-                cur.execute("INSERT INTO bike_stats (filename, start, distance, duration, ascent, avg_speed, hr_avg, hr_max) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
+            elif (exercise.activity_type == 'Biking' and exercise.duration != None):
+                cur.execute('INSERT INTO bike_stats (filename, start, distance, duration, ascent, avg_speed, hr_avg, hr_max) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING',
                             [tf, exercise.start_time - timedelta(hours=subtr_hrs), exercise.distance, exercise.duration, exercise.ascent, exercise.avg_speed, exercise.hr_avg, exercise.hr_max])
                 for pt_info in exercise.trackpoints:
-                    cur.execute("INSERT INTO bike_pts (date, filename, lon, lat, distance, elevation, hr) VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
+                    cur.execute('INSERT INTO bike_pts (date, filename, lon, lat, distance, elevation, hr) VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING',
                                 [pt_info.time - timedelta(hours=subtr_hrs), tf, pt_info.longitude, pt_info.latitude, pt_info.distance,  pt_info.elevation, pt_info.hr_value])
         conn.commit()
-        print("Records created successfully")
+        print('Records created successfully')
         conn.close()
-        return tcx_files
 
     except (Exception, psycopg2.Error) as error:
-        print("Error while fetching data from PostgreSQL", error)
+        print('Error while fetching data from PostgreSQL', error)
 
     finally:
         if conn:
             cur.close()
             conn.close()
-            print("PostgreSQL connection is closed")
+            print('PostgreSQL connection is closed')
+            
+    return tcx_files
 
 
-def postgres_to_df(SQL_query, db, user="postgres", pwd="", host="localhost", port=5432):
+def postgres_to_df(SQL_query, db, user='postgres', pwd='', host='localhost', port=5432):
     try:
-        conn = psycopg2.connect(database=db, user="postgres", password=pwd, host=host, port=port)
+        conn = psycopg2.connect(database=db, user='postgres', password=pwd, host=host, port=port)
         cur = conn.cursor()
         cur.execute(SQL_query)
         items = cur.fetchall()
@@ -451,20 +456,20 @@ def postgres_to_df(SQL_query, db, user="postgres", pwd="", host="localhost", por
             hits.append(row)
         col_names = [desc[0] for desc in cur.description]
         hits_df=pd.DataFrame(hits, columns=col_names)
-        if ("lat" in col_names and "lon" in col_names):
-            hits_gdf = gpd.GeoDataFrame(hits_df, geometry=gpd.points_from_xy(hits_df.loc[:,'lon'],hits_df.loc[:,'lat'], crs="EPSG:4326"))
+        if ('lat' in col_names and 'lon' in col_names):
+            hits_gdf = gpd.GeoDataFrame(hits_df, geometry=gpd.points_from_xy(hits_df.loc[:,'lon'],hits_df.loc[:,'lat'], crs='EPSG:4326'))
             return hits_gdf
         else:
             return hits_df
 
     except (Exception, psycopg2.Error) as error:
-        print("Error while fetching data from PostgreSQL", error)
+        print('Error while fetching data from PostgreSQL', error)
 
     finally:
         if conn:
             cur.close()
             conn.close()
-            print("PostgreSQL connection is closed")
+            print('PostgreSQL connection is closed')
 
 
 ################################
@@ -472,7 +477,7 @@ def postgres_to_df(SQL_query, db, user="postgres", pwd="", host="localhost", por
 ################################
 
 def plot_heatmap(df, out_name):
-    #df = df.set_index("time").sort_index()
+    #df = df.set_index('time').sort_index()
     df = df.iloc[::1, :] ## subset every 1 points to keep file size down
     # for routes polylines
     all_routes_xy = []
@@ -484,9 +489,9 @@ def plot_heatmap(df, out_name):
     heatmap = folium.Map(location=[np.mean(df.lat), np.mean(df.lon)], control_scale=False, zoom_start=12)
     tile = folium.TileLayer(tiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
                             attr = 'ESRI', name = 'ESRI Satellite', overlay = True, control = True, show = True).add_to(heatmap)
-    cluster = plugins.HeatMap(data=[[la, lo] for la, lo in zip(df.lat, df.lon)], name="heatmap", min_opacity=0.15, max_zoom=10,  radius=9, blur=8)
+    cluster = plugins.HeatMap(data=[[la, lo] for la, lo in zip(df.lat, df.lon)], name='heatmap', min_opacity=0.15, max_zoom=10,  radius=9, blur=8)
     heatmap.add_child(cluster)
-    fg = folium.FeatureGroup("routes")
+    fg = folium.FeatureGroup('routes')
     folium.PolyLine(locations=all_routes_xy, weight=1.0, opacity = 1.0, color='red', control = True, show = True).add_to(fg)
     fg.add_to(heatmap)
     folium.LayerControl().add_to(heatmap)
@@ -494,8 +499,9 @@ def plot_heatmap(df, out_name):
     return heatmap
 
 def plot_3d(df, out_fi):
+    df = df.iloc[::1, :] ## subset every 1 points to keep file size down
     route_3d = px.scatter_3d(df, x='lon', y='lat', z='ele', color='ele')
-    route_3d.update_traces(marker=dict(size=2.0), selector=dict(mode='markers'))
+    route_3d.update_traces(marker=dict(size=1.5), selector=dict(mode='markers'))
     route_3d.write_html(out_fi)
     return route_3d
 
@@ -507,11 +513,11 @@ def cal_heatmap(df, col_name, mpl_cmap, out_name):
     df['month'] = pd.to_datetime(df['start']).dt.to_period('M')
     df['week'] = pd.to_datetime(df['start']).dt.to_period('W')
     df = df.reindex(sorted(df.columns), axis=1)
-    df['Year'] = [int(str(i).split("-")[0]) for i in df['start']]
+    df['Year'] = [int(str(i).split('-')[0]) for i in df['start']]
     df = df.sort_values('start')
     events = pd.Series([i for i in df[col_name]],
                        index=[i for i in  df['start'].astype('datetime64[ns]') - timedelta(hours=6)])
-    cal_fig = calplot.calplot(events, suptitle="running "+col_name+" per day", cmap=mpl_cmap, colorbar=True, yearlabel_kws={'fontname':'sans-serif'})
+    cal_fig = calplot.calplot(events, suptitle='running '+col_name+' per day', cmap=mpl_cmap, colorbar=True, yearlabel_kws={'fontname':'sans-serif'})
     plt.savefig(out_name)
     return cal_fig[0]
 
@@ -520,25 +526,20 @@ def cal_heatmap(df, col_name, mpl_cmap, out_name):
 
 def main():
     ## parse user input params / instead of sourse config_file.sh
-    df = pd.read_csv(os.path.join(os.getcwd(), 'RUNfile.csv'))
-    input_username = str(df['user input'].iloc[0])
-    input_pwd = str(df['user input'].iloc[1])
-    days_b4_today = int(df['user input'].iloc[2])
-    act_type = str(df['user input'].iloc[3])
-    min_lon, max_lon, min_lat, max_lat = [float(i) for i in str(df['user input'].iloc[4]).split(", ")]
-    heatmap_cal_stats = [str(i) for i in str(df['user input'].iloc[5]).split(", ")]
-    running_fig_dir = str(df['user input'].iloc[6])
-    print(running_fig_dir)
-
+    df = pd.read_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'params.csv'))
+    input_username, input_pwd, days_b4_today, act_type, _, _, running_fig_dir = [str(i) for i in df['user input']]
+    min_lon, max_lon, min_lat, max_lat = [float(i) for i in str(df['user input'].iloc[4]).split(', ')]
+    heatmap_cal_stats = [str(i) for i in str(df['user input'].iloc[5]).split(', ')]
     
     ## create archive and output figure directories if they don't exist
-    archive_dir = os.path.join(os.getcwd(), 'garmin_archive')
-    if not os.path.exists(archive_dir):
-        os.makedirs(archive_dir)
     if not os.path.exists(running_fig_dir):
         os.makedirs(running_fig_dir)
+    archive_dir = os.path.join(running_fig_dir, 'garmin_archive')
+    if not os.path.exists(archive_dir):
+        os.makedirs(archive_dir)
+        
     ## download garmin activity files
-    out_dir =  get_garmin(num_days = days_b4_today, project_dir = os.getcwd(), file_types = [".tcx", ".gpx"], email = input_username, password = input_pwd )
+    out_dir =  get_garmin(num_days = days_b4_today, project_dir = os.path.dirname(os.path.abspath(__file__)), file_types = ['.tcx', '.gpx'], email = input_username, password = input_pwd )
 
     ## parse tcx files
     tcx_to_postgres(out_dir, db = 'garmin_activities')
@@ -554,17 +555,14 @@ def main():
         shutil.rmtree(out_dir)
 
     ## i) route heatmap
-    full = postgres_to_df("SELECT * FROM gpx_"+act_type+" WHERE lat >= "+str(min_lat)+" AND lat <= "+str(max_lat)+" AND lon >= "+str(min_lon)+" AND lon <= "+str(max_lon)+";",
-    db = "garmin_activities", user = "postgres", pwd = "", host = "localhost", port = 5432)
-
-    plot_heatmap(full, os.path.join(running_fig_dir, act_type+"_heatMap.html"))
-
+    full = postgres_to_df('SELECT * FROM gpx_'+act_type.lower()+' WHERE lat >= '+str(min_lat)+' AND lat <= '+str(max_lat)+' AND lon >= '+str(min_lon)+' AND lon <= '+str(max_lon)+';', db = 'garmin_activities', user = 'postgres', pwd = '', host = 'localhost', port = 5432)
+    plot_heatmap(full, os.path.join(running_fig_dir, act_type+'_heatMap.html'))
     ## ii) 3D routes
     sub = full[(full['lat'] >= min_lat) & (full['lat'] <= max_lat) & (full['lon'] >= min_lon) & (full['lon'] <= max_lon)]
-    plot_3d(df = full, out_fi = os.path.join(running_fig_dir, act_type+"_route3D.html"))
+    plot_3d(df = full, out_fi = os.path.join(running_fig_dir, act_type+'_route3D.html'))
     ## iii) heatmap calendar
     for heatmap_cal_stat in heatmap_cal_stats:
-        cal_heatmap(df = postgres_to_df("SELECT * FROM "+act_type[:-1]+"_stats;", db = "garmin_activities", user="postgres", pwd="", host="localhost", port=5432),
+        cal_heatmap(df = postgres_to_df('SELECT * FROM '+act_type[:-1].lower()+'_stats;', db = 'garmin_activities', user='postgres', pwd='', host='localhost', port=5432),
                     col_name = heatmap_cal_stat,
                     mpl_cmap = 'YlGn',
                     out_name = os.path.join(running_fig_dir, act_type+'_heatCal_'+heatmap_cal_stat+'.png'))
@@ -572,5 +570,5 @@ def main():
 ######################################################################
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()       
