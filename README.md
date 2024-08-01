@@ -16,7 +16,7 @@ Your information from ```RUNfile.csv``` is read by ```activities.py```, which is
 ![workflow](garminworkflow.png)
 
 
-## Optionally, set a cron schedule to automatically make maps of your routes  (on your Mac or Linux local machine)
+## Optionally, set a cron schedule to automatically make maps of your routes  (on your Mac or Linux machine)
 
 ### Files: 
 ```activities.sh```, ```activities.py```, and ```RUNfile.csv``` must be in the same folder   
