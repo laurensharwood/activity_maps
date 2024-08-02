@@ -528,13 +528,8 @@ def main():
     ## parse user input params / instead of sourse config_file.sh
     df = pd.read_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'params.csv'))
     input_username, input_pwd, days_b4_today, act_type, _, _, running_fig_dir, archive_dir = [str(i) for i in df['user input']]
-    if len(df['user input'].iloc[4]) > 1:
-        subset = True
-        min_lon, max_lon, min_lat, max_lat = [float(i) for i in str(df['user input'].iloc[4]).split(', ')]
-    else:
-        subset = False
     heatmap_cal_stats = [str(i) for i in str(df['user input'].iloc[5]).split(', ')]
-    
+
     ## create archive and output figure directories if they don't exist
     if not os.path.exists(running_fig_dir):
         try:
@@ -545,7 +540,8 @@ def main():
         try:
             os.makedirs(archive_dir)
         except:
-            print('Archive directory parameter in params.csv is not a valid filepath')        
+            print('Archive directory parameter in params.csv is not a valid filepath')
+
     ## download garmin activity files
     out_dir =  get_garmin(num_days = days_b4_today, 
                           project_dir = os.path.dirname(os.path.abspath(__file__)), 
@@ -559,8 +555,8 @@ def main():
     gpx_to_postgres(out_dir, 
                     table_name = 'gpx_runs', 
                     db = 'garmin_activities')
-    gpx_to_postgres(out_dir, 
-                    table_name = 'gpx_bikes', 
+    gpx_to_postgres(out_dir,
+                    table_name = 'gpx_bikes',
                     db = 'garmin_activities')
 
     ## move all of the activity files themselves .gpx, .tcx in to 'archive' folder
@@ -576,14 +572,13 @@ def main():
     plot_heatmap(full, 
                  os.path.join(running_fig_dir, act_type+'_heatMap.html'))
 
-    ## subset for 3D map only
-    if subset == True:
-        df = full[(full['lat'] >= min_lat) & (full['lat'] <= max_lat) & (full['lon'] >= min_lon) & (full['lon'] <= max_lon)]
+    ## only create ii) 3D map for a square-ish subset of area
+    if len(df['user input'].iloc[4]) > 1:
+        min_lon, max_lon, min_lat, max_lat = [float(i) for i in str(df['user input'].iloc[4]).split(', ')]
+        plot_3d(df = full[(full['lat'] >= min_lat) & (full['lat'] <= max_lat) & (full['lon'] >= min_lon) & (full['lon'] <= max_lon)],
+                out_fi = os.path.join(running_fig_dir, act_type + '_route3D.html'))
     else:
-        df = full
-    ## ii) 3D map 
-    plot_3d(df = df, 
-            out_fi = os.path.join(running_fig_dir, act_type+'_route3D.html'))
+        print('Provide a square-ish bounding box region -- min lon, max lon, min lat, max lat -- for the 3D map')
 
     ## iii) heatmap calendar
     for heatmap_cal_stat in heatmap_cal_stats:
