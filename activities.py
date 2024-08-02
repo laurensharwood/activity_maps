@@ -386,7 +386,7 @@ def gpx_to_postgres(data_dir, table_name, db='garmin_activities'):
                         cur.execute('INSERT INTO '+table_name+' (date, filename, lat, lon, ele, speed) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING',
                                     [pt.time, fi, pt.latitude, pt.longitude, pt.elevation, speed])
         conn.commit()
-        print('Records created successfully')
+        print('Records inserted successfully')
         conn.close()
         return gpx_files
 
@@ -430,7 +430,7 @@ def tcx_to_postgres(data_dir, db='garmin_activities'):
                     cur.execute('INSERT INTO bike_pts (date, filename, lon, lat, distance, elevation, hr) VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING',
                                 [pt_info.time - timedelta(hours=subtr_hrs), tf, pt_info.longitude, pt_info.latitude, pt_info.distance,  pt_info.elevation, pt_info.hr_value])
         conn.commit()
-        print('Records created successfully')
+        print('Records inserted successfully')
         conn.close()
 
     except (Exception, psycopg2.Error) as error:
@@ -478,7 +478,7 @@ def postgres_to_df(SQL_query, db, user='postgres', pwd='', host='localhost', por
 
 def plot_heatmap(df, out_name):
     #df = df.set_index('time').sort_index()
-    df = df.iloc[::1, :] ## subset every 1 points to keep file size down
+    df = df.iloc[::2, :] ## subset every 2 points to keep file size down
     # for routes polylines
     all_routes_xy = []
     for k, v in df.groupby(['filename']):
@@ -492,16 +492,16 @@ def plot_heatmap(df, out_name):
     cluster = plugins.HeatMap(data=[[la, lo] for la, lo in zip(df.lat, df.lon)], name='heatmap', min_opacity=0.15, max_zoom=10,  radius=9, blur=8)
     heatmap.add_child(cluster)
     fg = folium.FeatureGroup('routes')
-    folium.PolyLine(locations=all_routes_xy, weight=1.0, opacity = 1.0, color='red', control = True, show = True).add_to(fg)
+    folium.PolyLine(locations=all_routes_xy, weight=0.9, opacity = 0.85, color='red', control = True, show = True).add_to(fg)
     fg.add_to(heatmap)
     folium.LayerControl().add_to(heatmap)
     heatmap.save(out_name)
     return heatmap
 
 def plot_3d(df, out_fi):
-    df = df.iloc[::1, :] ## subset every 1 points to keep file size down
+    df = df.iloc[::4, :] ## subset every 4 points to keep file size down
     route_3d = px.scatter_3d(df, x='lon', y='lat', z='ele', color='ele')
-    route_3d.update_traces(marker=dict(size=1.5), selector=dict(mode='markers'))
+    route_3d.update_traces(marker={"size":1.0}, selector=dict(mode='markers'))
     route_3d.write_html(out_fi)
     return route_3d
 
@@ -527,25 +527,41 @@ def cal_heatmap(df, col_name, mpl_cmap, out_name):
 def main():
     ## parse user input params / instead of sourse config_file.sh
     df = pd.read_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'params.csv'))
-    input_username, input_pwd, days_b4_today, act_type, _, _, running_fig_dir = [str(i) for i in df['user input']]
-    min_lon, max_lon, min_lat, max_lat = [float(i) for i in str(df['user input'].iloc[4]).split(', ')]
+    input_username, input_pwd, days_b4_today, act_type, _, _, running_fig_dir, archive_dir = [str(i) for i in df['user input']]
+    if len(df['user input'].iloc[4]) > 1:
+        subset = True
+        min_lon, max_lon, min_lat, max_lat = [float(i) for i in str(df['user input'].iloc[4]).split(', ')]
+    else:
+        subset = False
     heatmap_cal_stats = [str(i) for i in str(df['user input'].iloc[5]).split(', ')]
     
     ## create archive and output figure directories if they don't exist
     if not os.path.exists(running_fig_dir):
-        os.makedirs(running_fig_dir)
-    archive_dir = os.path.join(running_fig_dir, 'garmin_archive')
+        try:
+            os.makedirs(running_fig_dir)
+        except:
+            print('Map output directory parameter in params.csv is not a valid filepath')
     if not os.path.exists(archive_dir):
-        os.makedirs(archive_dir)
-        
+        try:
+            os.makedirs(archive_dir)
+        except:
+            print('Archive directory parameter in params.csv is not a valid filepath')        
     ## download garmin activity files
-    out_dir =  get_garmin(num_days = days_b4_today, project_dir = os.path.dirname(os.path.abspath(__file__)), file_types = ['.tcx', '.gpx'], email = input_username, password = input_pwd )
+    out_dir =  get_garmin(num_days = days_b4_today, 
+                          project_dir = os.path.dirname(os.path.abspath(__file__)), 
+                          file_types = ['.tcx', '.gpx'], 
+                          email = input_username, 
+                          password = input_pwd )
 
     ## parse tcx files
     tcx_to_postgres(out_dir, db = 'garmin_activities')
     ## parse gpx files: save df for running and biking activities separately
-    gpx_to_postgres(out_dir, table_name = 'gpx_runs', db = 'garmin_activities')
-    gpx_to_postgres(out_dir, table_name = 'gpx_bikes', db = 'garmin_activities')
+    gpx_to_postgres(out_dir, 
+                    table_name = 'gpx_runs', 
+                    db = 'garmin_activities')
+    gpx_to_postgres(out_dir, 
+                    table_name = 'gpx_bikes', 
+                    db = 'garmin_activities')
 
     ## move all of the activity files themselves .gpx, .tcx in to 'archive' folder
     for file in os.listdir(out_dir):
@@ -555,17 +571,26 @@ def main():
         shutil.rmtree(out_dir)
 
     ## i) route heatmap
-    full = postgres_to_df('SELECT * FROM gpx_'+act_type.lower()+' WHERE lat >= '+str(min_lat)+' AND lat <= '+str(max_lat)+' AND lon >= '+str(min_lon)+' AND lon <= '+str(max_lon)+';', db = 'garmin_activities', user = 'postgres', pwd = '', host = 'localhost', port = 5432)
-    plot_heatmap(full, os.path.join(running_fig_dir, act_type+'_heatMap.html'))
-    ## ii) 3D routes
-    sub = full[(full['lat'] >= min_lat) & (full['lat'] <= max_lat) & (full['lon'] >= min_lon) & (full['lon'] <= max_lon)]
-    plot_3d(df = full, out_fi = os.path.join(running_fig_dir, act_type+'_route3D.html'))
+    ## +' WHERE lat >= '+str(min_lat)+' AND lat <= '+str(max_lat)+' AND lon >= '+str(min_lon)+' AND lon <= '+str(max_lon)
+    full = postgres_to_df('SELECT * FROM gpx_'+act_type.lower()+';', db = 'garmin_activities', user = 'postgres', pwd = '', host = 'localhost', port = 5432)
+    plot_heatmap(full, 
+                 os.path.join(running_fig_dir, act_type+'_heatMap.html'))
+
+    ## subset for 3D map only
+    if subset == True:
+        df = full[(full['lat'] >= min_lat) & (full['lat'] <= max_lat) & (full['lon'] >= min_lon) & (full['lon'] <= max_lon)]
+    else:
+        df = full
+    ## ii) 3D map 
+    plot_3d(df = df, 
+            out_fi = os.path.join(running_fig_dir, act_type+'_route3D.html'))
+
     ## iii) heatmap calendar
     for heatmap_cal_stat in heatmap_cal_stats:
         cal_heatmap(df = postgres_to_df('SELECT * FROM '+act_type[:-1].lower()+'_stats;', db = 'garmin_activities', user='postgres', pwd='', host='localhost', port=5432),
-                    col_name = heatmap_cal_stat,
+                    col_name = heatmap_cal_stat.replace(" ", ""),
                     mpl_cmap = 'YlGn',
-                    out_name = os.path.join(running_fig_dir, act_type+'_heatCal_'+heatmap_cal_stat+'.png'))
+                    out_name = os.path.join(running_fig_dir, act_type+'_heatCal_'+heatmap_cal_stat.replace(" ", "")+'.png'))
 
 ######################################################################
 
