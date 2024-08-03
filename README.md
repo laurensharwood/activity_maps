@@ -1,9 +1,9 @@
 # Instructions to create maps from your Garmin Connect activity data
 
-See an example of the three [map outputs](https://laurensharwood.github.io/): 
-i) route heatmap
-ii) 3D routes of a user input subset
-iii) a heatmap calendar of daily distance or ascent as a Github contributions graph.     
+See an example of the three [map outputs](https://laurensharwood.github.io/):   
+   i) route heatmap  
+   ii) 3D routes of a user input subset  
+   iii) a heatmap calendar of daily distance or ascent as a Github contributions graph      
 
 ## <b>[Google Colab](https://colab.research.google.com/) Steps:</b>   
 1. <b>Fill out</b>  your information in ```params.csv```   
