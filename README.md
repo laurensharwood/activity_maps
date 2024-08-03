@@ -1,6 +1,6 @@
 # Instructions to create maps from your Garmin Connect activity data
 
-See [example maps](https://laurensharwood.github.io/)   
+See an example of the three [map outputs](https://laurensharwood.github.io/): i) route heatmap, ii) 3D routes of a user input subset, and iii) a heatmap calendar of daily distance or ascent as a Github contributions graph.     
 
 ## <b>[Google Colab](https://colab.research.google.com/) Steps:</b>   
 1. <b>Fill out</b>  your information in ```params.csv```   
@@ -11,9 +11,6 @@ See [example maps](https://laurensharwood.github.io/)
     * click inside the cell so the cursor is blinking, then press <i>ctrl+enter</i> or  <i>shift+enter</i>, or    
     * click that cell's arrow (see below)
 ![runcel](runcell.jpg)
-
-![workflow](garminworkflow.png)
-
 
 ## Alternatively, set a cron schedule on your Mac or Linux machine to automatically create maps: 
 
