@@ -7,7 +7,7 @@ See an example of the three [map outputs](https://laurensharwood.github.io/): i)
 2. <b>Upload</b> ```activities.ipynb```, ```activities.py```, and ```params.csv``` to the same folder in Google Drive
 3. <b>To open</b> ```activities.ipynb``` in Google Drive:  
     * right-click ```activities.ipynb``` > Open With > Google Colaboratory  
-4.  <b>To run a cell</b> in Google Colab Notebook:  
+4.  <b>To run a cell</b>:  
     * click inside the cell so the cursor is blinking, then press <i>ctrl+enter</i> or  <i>shift+enter</i>, or    
     * click that cell's arrow (see below)
 ![runcel](runcell.jpg)
