@@ -1,28 +1,27 @@
-# Instructions to create maps of your Garmin Connect activity data
+# Instructions to create maps from your Garmin Connect activity data
 
-
-See [example](https://laurensharwood.github.io/)        
-
+See [example maps](https://laurensharwood.github.io/)   
 
 ## <b>[Google Colab](https://colab.research.google.com/) Steps:</b>   
-Your information from ```RUNfile.csv``` is read by ```activities.py```, which is executed from ```activities.ipynb```.
-1. <b>Fill out your information</b> in ```RUNfile.csv```. 
-2. <b>Upload</b> ```activities.ipynb```, ```activities.py```, and ```RUNfile.csv``` to the same folder in Google Drive.
-3. <b>To open ```activities.ipynb``` in Google Drive:</b> right-click ```activities.ipynb``` > Open With > Google Colaboratory.  
-4. <b>To run a given cell:</b> click that cell's arrow or select the cell then press <i>Shift+Enter</i>.   
-   * Run the first cell to connect to your Google Drive storage. 
-   * Run the next cell to download, parse, and map your Garmin activity files.   
+1. <b>Fill out</b>  your information in ```params.csv```   
+2. <b>Upload</b> ```activities.ipynb```, ```activities.py```, and ```params.csv``` to the same folder in Google Drive
+3. <b>To open</b> ```activities.ipynb``` in Google Drive:  
+    * right-click ```activities.ipynb``` > Open With > Google Colaboratory  
+4.  <b>To run a cell</b> in Google Colab Notebook:  
+    * click inside the cell so the cursor is blinking, then press <i>ctrl+enter</i> or  <i>shift+enter</i>, or    
+    * click that cell's arrow (see below)
+![runcel](runcell.jpg)
 
 ![workflow](garminworkflow.png)
 
 
-## Optionally, set a cron schedule to automatically make maps of your routes  (on your Mac or Linux machine)
+## Alternatively, set a cron schedule on your Mac or Linux machine to automatically create maps: 
 
 ### Files: 
-```activities.sh```, ```activities.py```, and ```RUNfile.csv``` must be in the same folder   
+```params.csv```, ```activities.py```, & ```activities.sh``` must be in the same folder.   
 
 ```activities.sh```  <b>is called by cron</b>-- which has lines to activate a virtual environment (venv) with necessary packages installed, then execute ```activities.py``` from that active venv.     
-```activities.py``` reads user input parameters from ```RUNfile.csv``` to:  
+```activities.py``` reads user input parameters from ```params.csv``` to:  
 1. Download running and biking activities for <b>user input</b> number of days before today.  
 2. If there are files to download, append files to archive posgreSQL database. 
 3. If there are files to download, create maps. 
