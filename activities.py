@@ -318,18 +318,17 @@ def parse_tcx(data_dir):
         if TCXTrackPoint.activity_type == 'Running':
             df.loc[len(df.index)] = [file.name, TCXTrackPoint.start_time, TCXTrackPoint.distance, TCXTrackPoint.duration, TCXTrackPoint.ascent, TCXTrackPoint.hr_max, TCXTrackPoint.hr_avg, TCXTrackPoint.avg_speed]
         elif TCXTrackPoint.activity_type == 'Biking':
-            df_bike.loc[len(df_bike.index)] = [file.name, TCXTrackPoint.start_time, TCXTrackPoint.duration,
-                                               TCXTrackPoint.distance, TCXTrackPoint.ascent, TCXTrackPoint.hr_max,
-                                               TCXTrackPoint.avg_speed]
-    ## clean running activity attributes
+            df_bike.loc[len(df_bike.index)] = [file.name, TCXTrackPoint.start_time, TCXTrackPoint.duration, TCXTrackPoint.distance, TCXTrackPoint.ascent, TCXTrackPoint.hr_max, TCXTrackPoint.avg_speed]
     df['filename'] = [os.path.basename(i) for i in df['filename']]
     df.set_index('filename', inplace=True)
-    df['name'] = [os.path.basename(f) for f in df.index]
-    df['miles'] = [f / 1609.34 for f in df['distance']]
-    df['minutes'] = [f / 60 for f in df['duration']]
-    df['start'] = df['start'].astype('datetime64[ns]')
-    df.sort_values('start').dropna().to_csv(os.path.join(data_dir, 'runTCX_' + date + '.csv'))
-    df['start'] = [str(i) for i in df['start']]
+    df['start'] = df['start'].astype('datetime64[ns]') - timedelta(hours=6)
+    if len(df) > 0:
+        df.sort_values('start').dropna().to_csv(os.path.join(data_dir, 'runTCX_' + date + '.csv'))
+    df_bike['filename'] = [os.path.basename(i) for i in df_bike['filename']]
+    df_bike.set_index('filename', inplace=True)
+    df_bike['start'] = df_bike['start'].astype('datetime64[ns]') - timedelta(hours=6)
+    if len(df_bike) > 0:
+        df_bike.sort_values('start').dropna().to_csv(os.path.join(data_dir, 'bikeTCX_' + date + '.csv'))
     return df, df_bike
 
 def parse_gpx(data_dir):
@@ -492,7 +491,7 @@ def plot_heatmap(df, out_name):
     cluster = plugins.HeatMap(data=[[la, lo] for la, lo in zip(df.lat, df.lon)], name='heatmap', min_opacity=0.15, max_zoom=10,  radius=9, blur=8)
     heatmap.add_child(cluster)
     fg = folium.FeatureGroup('routes')
-    folium.PolyLine(locations=all_routes_xy, weight=0.9, opacity = 0.85, color='red', control = True, show = True).add_to(fg)
+    folium.PolyLine(locations=all_routes_xy, weight=0.9, opacity = 0.85, color = 'red', control = True, show = True).add_to(fg)
     fg.add_to(heatmap)
     folium.LayerControl().add_to(heatmap)
     heatmap.save(out_name)
@@ -549,15 +548,32 @@ def main():
                           email = input_username, 
                           password = input_pwd )
 
-    ## parse tcx files
-    tcx_to_postgres(out_dir, db = 'garmin_activities')
-    ## parse gpx files: save df for running and biking activities separately
-    gpx_to_postgres(out_dir, 
-                    table_name = 'gpx_runs', 
-                    db = 'garmin_activities')
-    gpx_to_postgres(out_dir,
-                    table_name = 'gpx_bikes',
-                    db = 'garmin_activities')
+    if os.getcwd().startswith("/content/"):
+        location = "cloud"
+        full, out_csv  = parse_gpx(data_dir = out_dir)
+        run_df, bike_df = parse_tcx(data_dir = out_dir)
+        if act_type == "runs":
+            date_df = run_df
+        elif act_type == "bikes":
+            date_df = bike_df
+
+    else:
+        location = "local"
+        tcx_to_postgres(data_dir = out_dir, db = 'garmin_activities')
+        ## parse gpx files: save df for running and biking activities separately
+        gpx_to_postgres(data_dir = out_dir, 
+                        table_name = 'gpx_runs', 
+                        db = 'garmin_activities')
+        gpx_to_postgres(out_dir,
+                        table_name = 'gpx_bikes',
+                        db = 'garmin_activities')
+
+        ## i) route heatmap
+        ## +' WHERE lat >= '+str(min_lat)+' AND lat <= '+str(max_lat)+' AND lon >= '+str(min_lon)+' AND lon <= '+str(max_lon)
+        full = postgres_to_df('SELECT * FROM gpx_'+act_type.lower()+';', db = 'garmin_activities', user = 'postgres', pwd = '', host = 'localhost', port = 5432)
+        date_df =  postgres_to_df('SELECT * FROM '+act_type[:-1].lower()+'_stats;', db = 'garmin_activities', user='postgres', pwd='', host='localhost', port=5432)
+
+
 
     ## move all of the activity files themselves .gpx, .tcx in to 'archive' folder
     for file in os.listdir(out_dir):
@@ -566,10 +582,7 @@ def main():
     if len(os.listdir(out_dir)) == 0:
         shutil.rmtree(out_dir)
 
-    ## i) route heatmap
-    ## +' WHERE lat >= '+str(min_lat)+' AND lat <= '+str(max_lat)+' AND lon >= '+str(min_lon)+' AND lon <= '+str(max_lon)
-    full = postgres_to_df('SELECT * FROM gpx_'+act_type.lower()+';', db = 'garmin_activities', user = 'postgres', pwd = '', host = 'localhost', port = 5432)
-    plot_heatmap(full, 
+    plot_heatmap(full,
                  os.path.join(running_fig_dir, act_type+'_heatMap.html'))
 
     ## only create ii) 3D map for a square-ish subset of area
@@ -582,7 +595,7 @@ def main():
 
     ## iii) heatmap calendar
     for heatmap_cal_stat in heatmap_cal_stats:
-        cal_heatmap(df = postgres_to_df('SELECT * FROM '+act_type[:-1].lower()+'_stats;', db = 'garmin_activities', user='postgres', pwd='', host='localhost', port=5432),
+        cal_heatmap(df = date_df,
                     col_name = heatmap_cal_stat.replace(" ", ""),
                     mpl_cmap = 'YlGn',
                     out_name = os.path.join(running_fig_dir, act_type+'_heatCal_'+heatmap_cal_stat.replace(" ", "")+'.png'))
