@@ -353,7 +353,24 @@ def parse_gpx(data_dir):
     pts_df.sort_values('date').to_csv(new_pt_csv)
     return pts_df, new_pt_csv
 
-
+def split_gpx_at(fi, split_min):
+    gpx_file = open(fi, 'r')
+    gpx = gpxpy.parse(gpx_file, version='1.1')
+    trackpoints = []
+    trackpoints2 = []
+    for track in gpx.tracks:
+        first = True
+        for seg in track.segments:
+            for point_no, pt in enumerate(seg.points):
+                if point_no > 0:
+                    secs_btwn = pt.time - seg.points[point_no - 1].time
+                    minutes = secs_btwn.total_seconds() / 60
+                    if (minutes < split_min and first == True):
+                        trackpoints.append([pt.time, fi, pt.latitude, pt.longitude, pt.elevation])
+                    elif (minutes > split_min or first == False):
+                        trackpoints2.append([pt.time, fi.replace(".gpx", "_2.gpx"), pt.latitude, pt.longitude, pt.elevation])
+                        first = False
+    return (trackpoints, trackpoints2)
 
 def gpx_to_postgres(data_dir, table_name, db='garmin_activities'):
     '''
@@ -382,8 +399,11 @@ def gpx_to_postgres(data_dir, table_name, db='garmin_activities'):
                             speed = 0
                         else:
                             speed = 0
-                        cur.execute('INSERT INTO '+table_name+' (date, filename, lat, lon, ele, speed) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING',
-                                    [pt.time, fi, pt.latitude, pt.longitude, pt.elevation, speed])
+                        ## add _2 to filename if consecutive trackpoints are more than 60 minutes apart 
+                        insert_list = split_gpx_at(fi = fi, split_min = 60)
+                        for run_part in insert_list:
+                            cur.execute('INSERT INTO '+table_name+' (date, filename, lat, lon, ele, speed) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING',
+                                       run_part)
         conn.commit()
         print('Records inserted successfully')
         conn.close()
@@ -413,7 +433,6 @@ def tcx_to_postgres(data_dir, db='garmin_activities'):
         conn = psycopg2.connect(database=db, user='postgres', password='', host='localhost', port=5432)
         cur = conn.cursor()
         for tf in tcx_files:
-            file = open(os.path.join(data_dir, tf), 'r')
             tcx_reader = TCXReader()
             exercise = tcx_reader.read(os.path.join(data_dir, tf))
             if (exercise.activity_type == 'Running' and exercise.duration != None):
@@ -570,10 +589,18 @@ def main():
 
         ## i) route heatmap
         ## +' WHERE lat >= '+str(min_lat)+' AND lat <= '+str(max_lat)+' AND lon >= '+str(min_lon)+' AND lon <= '+str(max_lon)
-        full = postgres_to_df('SELECT * FROM gpx_'+act_type.lower()+';', db = 'garmin_activities', user = 'postgres', pwd = '', host = 'localhost', port = 5432)
-        date_df =  postgres_to_df('SELECT * FROM '+act_type[:-1].lower()+'_stats;', db = 'garmin_activities', user='postgres', pwd='', host='localhost', port=5432)
-
-
+        full = postgres_to_df('SELECT * FROM gpx_'+act_type.lower()+';', 
+                              db = 'garmin_activities', 
+                              user = 'postgres', 
+                              pwd = '', 
+                              host = 'localhost', 
+                              port = 5432)
+        date_df = postgres_to_df('SELECT * FROM '+act_type[:-1].lower()+'_stats;', 
+                                db = 'garmin_activities', 
+                                user='postgres', 
+                                pwd='',
+                                host='localhost', 
+                                port=5432)
 
     ## move all of the activity files themselves .gpx, .tcx in to 'archive' folder
     for file in os.listdir(out_dir):
