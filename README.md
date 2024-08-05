@@ -23,36 +23,6 @@ See an example of the three [map outputs](https://laurensharwood.github.io/): i)
 2. If there are files to download, append files to archive posgreSQL database. 
 3. If there are files to download, create maps. 
 
-### Cron setup: Do once
-<b>Save your Garmin login credentials</b> by entering the following commands in your terminal:   
-~~~
-export GARMIN_EMAIL = {your garmin username/email}
-export GARMIN_PWD = {your garmin pwd}
-~~~
-
-<b>Set execute permissions</b> for activities.sh and activities.py:    
-~~~
-chmod +x activities.py
-chmod +x activities.sh
-~~~
-
-<b>Create cron task:</b>   
-1. Enter ```crontab -e``` in your terminal    
-2. Add a line specifying how often to execute a script:    
-~~~
-min hour day-of-month month day-of-week {command}  
-~~~
-ex) every day (```*``` == all) at 10:00am run activities.sh & don't send that email    
-~~~
-00 10 * * * ~/activities.sh >/dev/null 2>&1  
-~~~
-3. Save:
-   * ctrl+X (to escape editing session)
-   * Y (yes)
-   * Enter     
-
-5. Print active tasks: ```crontab -l``` to ensure it was created
-
 ### PostgreSQL setup: Do once
 <b>Create postgreSQL archive database</b> in psql
 ~~~
@@ -101,3 +71,34 @@ Launch psql terminal to create database or delete tables:
 > DROP TABLE run_stats;  
 > DROP TABLE bike_stats;  
  
+
+### Cron setup: Do once
+<b>Save your Garmin login credentials</b> by entering the following commands in your terminal:   
+~~~
+export GARMIN_EMAIL = {your garmin username/email}
+export GARMIN_PWD = {your garmin pwd}
+~~~
+
+<b>Set execute permissions</b> for activities.sh and activities.py:    
+~~~
+chmod +x activities.py
+chmod +x activities.sh
+~~~
+
+<b>Create cron task:</b>   
+1. Enter ```crontab -e``` in your terminal    
+2. Add a line specifying how often to execute a script:    
+~~~
+min hour day-of-month month day-of-week {command}  
+~~~
+ex) every day (```*``` == all) at 10:00am run activities.sh & don't send that email    
+~~~
+00 10 * * * ~/activities.sh >/dev/null 2>&1  
+~~~
+3. Save:
+   * ctrl+X (to escape editing session)
+   * Y (yes)
+   * Enter     
+
+5. Print active tasks: ```crontab -l``` to ensure it was created
+
