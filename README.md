@@ -64,14 +64,16 @@ CREATE DATABASE garmin_activities;
 import psycopg2
 
 table_column_dict = {
+    ## activity foreign key lookup
+    "activity_names":"(activity CHAR(14) PRIMARY KEY, activity_gpx CHAR(18) UNIQUE NOT NULL, activity_tcx CHAR(18) UNIQUE NOT NULL)" ,
     ## gpx waypoints 
-    "gpx_runs": "(date TIMESTAMP PRIMARY KEY, filename CHAR(18) NOT NULL, lat FLOAT NOT NULL, lon FLOAT NOT NULL, ele FLOAT NOT NULL, speed FLOAT NOT NULL)",
-    "gpx_bikes": "(date TIMESTAMP PRIMARY KEY, filename CHAR(18) NOT NULL, lat FLOAT NOT NULL, lon FLOAT NOT NULL, ele FLOAT NOT NULL, speed FLOAT NOT NULL)",
+    "gpx_runs": "(filename CHAR(18) REFERENCES activity_names (activity_gpx), date TIMESTAMP PRIMARY KEY, lat FLOAT NOT NULL, lon FLOAT NOT NULL, ele FLOAT NOT NULL, speed FLOAT NOT NULL)",
+    "gpx_bikes": "(filename CHAR(18) REFERENCES activity_names (activity_gpx), date TIMESTAMP PRIMARY KEY, lat FLOAT NOT NULL, lon FLOAT NOT NULL, ele FLOAT NOT NULL, speed FLOAT NOT NULL)",
     ## tcx activity stats & tracks 
-    "run_pts": "(date TIMESTAMP PRIMARY KEY, filename CHAR(18) NOT NULL, lon FLOAT NOT NULL, lat FLOAT NOT NULL, distance FLOAT NOT NULL, elevation FLOAT NOT NULL, hr FLOAT, cadence FLOAT)",
-    "bike_pts": "(date TIMESTAMP PRIMARY KEY, filename CHAR(18) NOT NULL, lon FLOAT NOT NULL, lat FLOAT NOT NULL, distance FLOAT NOT NULL, elevation FLOAT NOT NULL, hr FLOAT)",
-    "run_stats": "(filename CHAR(18) PRIMARY KEY NOT NULL, start TIMESTAMP UNIQUE NOT NULL, distance FLOAT NOT NULL, duration FLOAT NOT NULL, ascent FLOAT NOT NULL, avg_speed FLOAT NOT NULL, hr_avg FLOAT, hr_max FLOAT)",
-    "bike_stats": "(filename CHAR(18) PRIMARY KEY NOT NULL, start TIMESTAMP UNIQUE NOT NULL, distance FLOAT NOT NULL, duration FLOAT NOT NULL, ascent FLOAT NOT NULL, avg_speed FLOAT NOT NULL, hr_avg FLOAT, hr_max FLOAT)",
+    "run_pts": "(date TIMESTAMP PRIMARY KEY, filename CHAR(18) REFERENCES activity_names (activity_tcx), lon FLOAT NOT NULL, lat FLOAT NOT NULL, distance FLOAT NOT NULL, elevation FLOAT NOT NULL, hr FLOAT, cadence FLOAT)",
+    "bike_pts": "(date TIMESTAMP PRIMARY KEY, filename CHAR(18) REFERENCES activity_names (activity_tcx), lon FLOAT NOT NULL, lat FLOAT NOT NULL, distance FLOAT NOT NULL, elevation FLOAT NOT NULL, hr FLOAT)",
+    "run_stats": "(filename CHAR(18) PRIMARY KEY REFERENCES activity_names (activity_tcx), start TIMESTAMP UNIQUE NOT NULL, distance FLOAT NOT NULL, duration FLOAT NOT NULL, ascent FLOAT NOT NULL, avg_speed FLOAT NOT NULL, hr_avg FLOAT, hr_max FLOAT)",
+    "bike_stats": "(filename CHAR(18) PRIMARY KEY REFERENCES activity_names (activity_tcx), start TIMESTAMP UNIQUE NOT NULL, distance FLOAT NOT NULL, duration FLOAT NOT NULL, ascent FLOAT NOT NULL, avg_speed FLOAT NOT NULL, hr_avg FLOAT, hr_max FLOAT)",
 }
 
 for k in table_column_dict:
@@ -81,8 +83,21 @@ for k in table_column_dict:
         cur.execute("CREATE TABLE "+k+table_column_dict[k]+";")
     except (Exception, psycopg2.Error) as error:
         print("Error while fetching data from PostgreSQL: ", error)
-    conn.commit() # <--- makes sure the change is shown in the database
-
+    conn.commit() 
 conn.close()
 cur.close()
 ~~~
+
+
+
+Launch psql terminal to create database or delete tables:   
+> CREATE DATABASE garmin_activities;   
+  
+> DROP TABLE activity_names CASCADE;  
+> DROP TABLE gpx_runs;  
+> DROP TABLE gpx_bikes;  
+> DROP TABLE run_pts;  
+> DROP TABLE bike_pts;  
+> DROP TABLE run_stats;  
+> DROP TABLE bike_stats;  
+ 
