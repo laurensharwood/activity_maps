@@ -3,7 +3,7 @@ Garmin username,
 Garmin password,
 Number of days before today,10
 Route heatmap: runs OR bikes,runs
-"3d plot bounds: Lon min, Lon max, Lat min, Lat max","-119.98, -119.5, 34.3, 34.6"
-Heatmap calendar stat: in meters,"distance, ascent"
-Map output directory,C:\Users\laure\projects\activity_maps\maps
-Archive directory,C:\Users\laure\projects\activity_maps\garmin_archive
+"3d plot bounds (in decimal degrees): X-min, X-max, Y-min, Y-max","-119.98, -119.5, 34.3, 34.6"
+Heatmap calendar stat (in feet):,"distance, ascent"
+Map output directory,maps
+Archive directory,garmin_archive
