@@ -20,7 +20,7 @@ See an example of the three [map outputs](https://laurensharwood.github.io/): i)
 ```activities.sh```  <b>is called by cron</b>-- which has lines to activate a virtual environment (venv) with necessary packages installed, then execute ```activities.py``` from that active venv.     
 ```activities.py``` reads user input parameters from ```params.csv``` to:  
 1. Download running and biking activities for <b>user input</b> number of days before today.  
-2. If there are files to download, append files to archive posgreSQL database. 
+2. If there are files to download, append files to archive <b>posgreSQL database</b>. 
 3. If there are files to download, create maps. 
 
 ### PostgreSQL setup: Do once
