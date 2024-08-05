@@ -73,11 +73,6 @@ Launch psql terminal to create database or delete tables:
  
 
 ### Cron setup: Do once
-<b>Save your Garmin login credentials</b> by entering the following commands in your terminal:   
-~~~
-export GARMIN_EMAIL = {your garmin username/email}
-export GARMIN_PWD = {your garmin pwd}
-~~~
 
 <b>Set execute permissions</b> for activities.sh and activities.py:    
 ~~~
