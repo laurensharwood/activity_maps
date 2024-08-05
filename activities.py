@@ -42,7 +42,6 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 import calplot ## https://github.com/tomkwok/calplot.git (pip install calplot)
 
-
 class Garmin:
     """
     from https://github.com/cyberjunky/python-garminconnect/blob/master/garminconnect/__init__.py
@@ -353,26 +352,27 @@ def parse_gpx(data_dir):
     pts_df.sort_values('date').to_csv(new_pt_csv)
     return pts_df, new_pt_csv
 
-
-
-
 def split_gpx_at(fi, split_min):
     gpx_file = open(fi, 'r')
     gpx = gpxpy.parse(gpx_file, version='1.1')
     trackpoints = []
     trackpoints2 = []
     for track in gpx.tracks:
-        first = True
         for seg in track.segments:
             for point_no, pt in enumerate(seg.points):
-                if point_no > 0:
+                first_part = True
+                if point_no == 0:
+                    trackpoints.append([pt.time, fi, pt.latitude, pt.longitude, pt.elevation])
+                elif point_no > 0:
                     secs_btwn = pt.time - seg.points[point_no - 1].time
                     minutes = secs_btwn.total_seconds() / 60
-                    if (minutes < split_min and first == True):
+                    if minutes < split_min:
                         trackpoints.append([pt.time, fi, pt.latitude, pt.longitude, pt.elevation])
-                    elif (minutes > split_min or first == False):
+                    elif (minutes > split_min or first_part == False):
                         trackpoints2.append([pt.time, fi.replace(".gpx", "_2.gpx"), pt.latitude, pt.longitude, pt.elevation])
-                        first = False
+                        first_part = False
+                    else:
+                        print('CHECK')
     return (trackpoints, trackpoints2)
 
 def gpx_to_postgres(data_dir, table_name, db='garmin_activities'):
@@ -403,8 +403,8 @@ def gpx_to_postgres(data_dir, table_name, db='garmin_activities'):
                         else:
                             speed = 0
                         ## add _2 to filename if consecutive trackpoints are more than 60 minutes apart 
-                        insert_list = split_gpx_at(fi = fi, split_min = 60)
-                        for run_part in insert_list:
+                        run_parts = split_gpx_at(fi = os.path.join(data_dir, fi), split_min = 60)
+                        for run_part in run_parts:
                             cur.execute('INSERT INTO '+table_name+' (date, filename, lat, lon, ele, speed) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING',
                                        run_part)
         conn.commit()
@@ -511,8 +511,6 @@ def postgres_to_df(SQL_query, db, user='postgres', pwd='', host='localhost', por
             print('PostgreSQL connection is closed')
 
 
-
-
 ################################
 ## RUNNING PLOTS
 ################################
@@ -556,14 +554,11 @@ def cal_heatmap(df, col_name, mpl_cmap, out_name):
     df = df.reindex(sorted(df.columns), axis=1)
     df['Year'] = [int(str(i).split('-')[0]) for i in df['start'].astype(str)]
     df = df.sort_values('start')
-    print(df)
     events = pd.Series([i for i in df[col_name]],
                        index=[i for i in  df['start'].astype('datetime64[ns]') - timedelta(hours=6)])
     cal_fig = calplot.calplot(events, suptitle='running '+col_name+' per day', cmap=mpl_cmap, colorbar=True, yearlabel_kws={'fontname':'sans-serif'})
     plt.savefig(out_name)
     return cal_fig[0]
-
-
 ######################################################################
 
 def main():
