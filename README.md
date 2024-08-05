@@ -12,7 +12,7 @@ See an example of the three [map outputs](https://laurensharwood.github.io/): i)
     * click that cell's arrow (see below)
 ![runcel](runcell.jpg)
 
-## Alternatively, set a cron schedule on your Mac or Linux machine to automatically create maps: 
+## Alternatively, create postgreSQL archive database (instead of saving as a .csv) and set a cron schedule on your Mac or Linux machine to automatically create maps:  
 
 ### Files: 
 ```params.csv```, ```activities.py```, & ```activities.sh``` must be in the same folder.   
