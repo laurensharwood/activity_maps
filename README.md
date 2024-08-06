@@ -18,7 +18,7 @@ See an example of the three [map outputs](https://laurensharwood.github.io/): i)
 ```params.csv```, ```activities.py```, & ```activities.sh``` must be in the same folder.   
 
 ```activities.sh```  <b>is called by cron</b>-- which has lines to activate a virtual environment (venv) with necessary packages installed, then execute ```activities.py``` from that active venv.     
-```activities.py``` reads <b>user input</b> parameters from ```params.csv``` to:  
+```activities.py``` reads <u><b>user input</b></u> parameters from ```params.csv``` to:  
 1. Download running and biking activities.  
 2. If there are files to download, append files to archive <b>posgreSQL database</b>. 
 3. If there are files to download, create maps. 
