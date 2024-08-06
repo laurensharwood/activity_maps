@@ -10,7 +10,7 @@ See an example of the three [map outputs](https://laurensharwood.github.io/): i)
 4.  <b>To run a cell</b>:  
     * click inside the cell so the cursor is blinking, then press <i>ctrl+enter</i> or  <i>shift+enter</i>, or    
     * click that cell's arrow (see below)
-![runcel](runcell.jpg)
+![runcel](run_cell.jpg)
 
 ## Alternatively, create postgreSQL archive database (instead of saving as a .csv) and set a cron schedule on your Mac or Linux machine to automatically create maps:  
 
