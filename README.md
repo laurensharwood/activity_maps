@@ -10,7 +10,7 @@ See an example of the three [map outputs](https://laurensharwood.github.io/): i)
 4.  <b>To run a cell</b>:  
     * click inside the cell so the cursor is blinking, then press <i>ctrl+enter</i> or  <i>shift+enter</i>, or    
     * click that cell's arrow (see below)
-5. <b>Enter your Garmin email & password when prompted</b>   
+5. <b>Enter your Garmin email & password when prompted</b> in cell #2, after packages are installed     
 ![runcel](run_cell.jpg)
 
 ## Alternatively, create postgreSQL archive database (instead of saving as a .csv) and set a cron schedule on your Mac or Linux machine to automatically create maps:  
