@@ -1,7 +1,9 @@
 # Instructions to create maps of your running and biking activities (from Garmin Connect or Strava)
 
-See the following [map outputs in interactive form](https://laurensharwood.github.io/) (Left to Right):    
-i) Running route heatmap (interactive),  ii) 3D running routes (interactive), iii) Heatmap calendar / GitHub contributions profile of daily running miles (static)
+See the following [map outputs in interactive form](https://laurensharwood.github.io/) (Left to Right):     
+   i) Running route heatmap (interactive)  
+   ii) 3D running routes (interactive)  
+   iii) Heatmap calendar / GitHub contributions profile of daily running miles (static)  
 
 ![maps](outputs.jpg)
 
