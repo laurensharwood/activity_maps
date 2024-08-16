@@ -1,0 +1,23 @@
+Parameter,User Input,Data Type,Description,Output Filename
+"Number of days
+or
+Strava archive directory",10,"integer
+or
+text","the number of days before today to download Garmin activities for
+or
+the directory of your Strava archive with .gpx files",
+i) Route heatmap bounds,N/A,"comma-separated float (decimal degrees)
+or
+text","[X-min, X-max, Y-min, Y-max] to bound route heatmap (in decimal degrees)
+or
+'N/A' to create map from all files","maps/HeatMap_runs.html
+maps/HeatMap_bikes.html
+maps/HeatMap_run_bike.html"
+ii) 3D map bounds,"-119.98, -119.5, 34.3, 34.6",comma-separated float (decimal degrees),"near-square shape [X-min, X-max, Y-min, Y-max] to bound 3D map *cannot be empty -- to ensure square bounds","maps/Route3D_runs.html
+maps/Route3D_bikes.html"
+iii) Heatmap calendar stat(s),"distance, ascent",comma-separated text,activity statistic sum per day,"maps/HeatCal_runs_distance.png
+maps/HeatCal_bikes_distance.png
+maps/HeatCal_runs_ascent.png
+maps/HeatCal_bikes_ascent.png"
+Map directory,maps,text,directory where .png and .html map outputs are saved (created if it doesn't exist),
+Archive directory,garmin_archive,text,"directory where .gpx, .tcx, and .csv files are saved (created if it doesn't exist)",
