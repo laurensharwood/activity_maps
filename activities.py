@@ -519,6 +519,7 @@ def plot_routemaps(run_df, bike_df, out_name):
     '''
     color running activities red and biking activities blue 
     '''
+    ## TODO: add option to color by ele or speed
     # for routes polylines
     runs_xy = []
     for k, v in run_df.groupby(['filename']):
@@ -580,9 +581,9 @@ def make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, h
         if len(heatmap_sub) > 0:
             plot_heatmap(df = heatmap_sub, out_name = os.path.join(running_fig_dir, 'HeatMap_'+act_type+'.html'), subset = 1) 
         else:
-            print('Not creating RouteMap for '+act_type+'. No activities within those bounds')
+            print('Not creating RouteMap for '+act_type+'. No activities within those bounds.')
     else:
-        print('Not creating RouteMap for '+act_type+'. No activities within user input days')
+        print('Not creating RouteMap for '+act_type+'. No activities within user input days.')
 
     ## only create ii) 3D map for a square-ish subset of area (from .gpx files per activity type within bounds)
     if (len(bounds) > 0 and len(route_df) > 0):
@@ -591,9 +592,9 @@ def make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, h
         if len(df_sub) > 0:
             plot_3d(df = df_sub, out_fi = os.path.join(running_fig_dir, 'Route3D_'+act_type+'.html'), subset = 1) 
         else:
-          print('Not creating 3D Map for '+act_type+'. No activities within those bounds')
+          print('Not creating 3D Map for '+act_type+'. No activities within those bounds.')
     elif (len(bounds) > 0 and len(route_df) == 0):
-          print('Not creating 3D Map for '+act_type+'. No activities within user input days')
+          print('Not creating 3D Map for '+act_type+'. No activities within user input days.')
 
     else:
         print('in https://geojson.io/: draw square over an area to map in 3D ')
@@ -650,10 +651,10 @@ def main():
         for act_type in act_d:
             date_df = act_d.get(act_type)
             new_act_files = date_df['filename'].to_list()
-            print(new_act_files)
+            print('new ', act_type[:-1], ' activity files: ', new_act_files)
             ## only make maps if there are new files to add 
             if len(new_act_files) == 0:
-                print('no new '+act_type+' files to add')
+                print('no new '+act_type[:-1]+' activity files-- not creating maps')
             else:
                  route_df = gpx_to_df(files = [os.path.join(out_dir, i.replace('.tcx', '.gpx')) for i in new_act_files] )
                  date_df.to_csv(os.path.join(out_dir, act_type[:-1]+"_stats_" + os.path.basename(out_dir) + ".csv"))
@@ -670,10 +671,10 @@ def main():
         act_d = {'bikes': bike_files, 'runs': run_files}
         for act_type in act_d:
             new_act_files = act_d.get(act_type)
-            print(new_act_files)
+            print('new ', act_type[:-1], ' activity files: ', new_act_files)
             ## only make maps if there are new files to add 
             if len(new_act_files) == 0:
-                print('no new '+act_type[:-1]+' activities')
+                print('no new '+act_type[:-1]+' activity files-- not creating maps')
             else:
                 ## select all run|bike activities
                 date_df = postgres_to_df('SELECT * FROM '+act_type[:-1]+'_stats;', db = postgres_db)
