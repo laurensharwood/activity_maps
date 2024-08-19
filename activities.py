@@ -1,3 +1,4 @@
+77% of storage used … If you run out, you can't create, edit, and upload files. Get 100 GB of storage for $1.99 $0.49 for 1 month.
 #!/usr/bin/ python
 
 """
@@ -332,7 +333,7 @@ def gpx_to_df(files):
     for fi in files:
         gpx = gpd.read_file(fi, layer='track_points')
         for k, v in gpx.iterrows():
-          df.loc[len(df.index)] = [v.time.astype('datetime64[ns]'), os.path.basename(fi), v.geometry.y, v.geometry.x, v.ele, 0]
+          df.loc[len(df.index)] = [v.time, os.path.basename(fi), v.geometry.y, v.geometry.x, v.ele, 0] ##.astype('datetime64[ns]')
     df['date'] = [str(i).split('+')[0] for i in df['date']]
     return df.sort_values('date')
 
@@ -487,7 +488,6 @@ def postgres_to_df(SQL_query, db, usr='postgres', pwd='', host='localhost', port
         conn.close()
         print('PostgreSQL connection to '+str(db)+'is closed')
 
-
 ################################
 ## RUNNING PLOTS
 ################################
@@ -573,7 +573,6 @@ def cal_heatmap(df, col_name, mpl_cmap, out_name):
     plt.savefig(out_name)
     return cal_fig[0]
 
-
 def make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, heatmap_cal_stats):
     ## i) create route heatmap (from .gpx files per activity type in archive directory)
     if (hm_bounds == 'nan' and len(route_df) > 0):
@@ -587,7 +586,6 @@ def make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, h
             print('Not creating RouteMap for '+act_type+'. No activities within those bounds')
     else:
         print('Not creating RouteMap for '+act_type+'. No activities within user input days')
-
     ## only create ii) 3D map for a square-ish subset of area (from .gpx files per activity type within bounds)
     if (len(bounds) > 0 and len(route_df) > 0):
         min_lon, max_lon, min_lat, max_lat = [float(i.replace(" ", "")) for i in str(bounds).split(',')]
@@ -598,11 +596,9 @@ def make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, h
           print('Not creating 3D Map for '+act_type+'. No activities within those bounds')
     elif (len(bounds) > 0 and len(route_df) == 0):
           print('Not creating 3D Map for '+act_type+'. No activities within user input days')
-
     else:
         print('in https://geojson.io/: draw square over an area to map in 3D ')
         print('Provide a square-ish bounding box region -- min lon, max lon, min lat, max lat -- for the 3D map')
-
     ## iii) heatmap calendar (from .tcx files per activity type in archive directory)
     for heatmap_cal_stat in heatmap_cal_stats:
         if len(date_df) > 1:
@@ -618,7 +614,6 @@ def main():
 
     ## initialize list to put df's of running and biking routes 
     rb_dfs=[] 
-    
     ## parse user input params / instead of sourse config_file.sh
     df = pd.read_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'params.csv'))
     days_b4_today, hm_bounds, bounds, hcs, running_fig_dir, archive_dir = [str(i) for i in df['User Input']]
@@ -638,7 +633,8 @@ def main():
     ## if the first user input parameter can be an integer, download garmin activity files
     try:
         days_b4_today = int(days_b4_today)
-        out_dir =  get_garmin(num_days = days_b4_today,  project_dir = os.path.dirname(os.path.abspath(__file__)),  file_types = ['.tcx', '.gpx'])
+        out_dir = "20240819"
+        ## out_dir =  get_garmin(num_days = days_b4_today,  project_dir = os.path.dirname(os.path.abspath(__file__)),  file_types = ['.tcx', '.gpx'])
     ## or if it's a string, make that out_dir (a place where activity files to be parsed are located) 
     except:
         if os.path.exists(str(days_b4_today)):
@@ -651,44 +647,35 @@ def main():
     if (os.getcwd().startswith("/content/") and type(days_b4_today) == type(1)): 
         cloudlocal = 'cloud'
         run_df, bike_df = tcx_to_df(tcx_files = [os.path.join(out_dir, i) for i in sorted(os.listdir(out_dir)) if i.endswith('.tcx')])
-        if len(run_df) > 0:
-            run_df.to_csv(os.path.join(out_dir, "run_stats_" + os.path.basename(out_dir) + ".csv"))
-        else:
-            print('no new run activities')
-        if len(bike_df) > 0:
-            bike_df.to_csv(os.path.join(out_dir, "bike_stats_" + os.path.basename(out_dir) + ".csv"))
-            print('no new bike activities')
-            
-        for act_type in ['bikes', 'runs']:
-            if act_type == 'runs':
-                new_act_files = run_df['filename'].to_list()
-                date_df = run_df 
-            elif act_type == 'bikes':
-                new_act_files = bike_df['filename'].to_list()
-                date_df = bike_df
+        act_d = {'bikes': bike_df, 'runs':run_df}
+        for act_type in act_d:
+            date_df = act_d.get(act_type)
+            new_act_files = date_df['filename'].to_list()
+            print(new_act_files)
+            ## only make maps if there are new files to add 
+            if len(new_act_files) == 0:
+                print('no new '+act_type+' files to add')
             else:
-                print('no new files to add')
-            if len(new_act_files) > 0:
-                route_df = gpx_to_df(files = [os.path.join(out_dir, i.replace('.tcx', '.gpx')) for i in new_act_files] )
-                route_df.to_csv(os.path.join(out_dir, act_type[:-1] + "_routes_" + os.path.basename(out_dir) + ".csv"))
+                 route_df = gpx_to_df(files = [os.path.join(out_dir, i.replace('.tcx', '.gpx')) for i in new_act_files] )
+                 date_df.to_csv(os.path.join(out_dir, act_type[:-1]+"_stats_" + os.path.basename(out_dir) + ".csv"))
+                 route_df.to_csv(os.path.join(out_dir, act_type[:-1] + "_routes_" + os.path.basename(out_dir) + ".csv"))
                 ## CREATE MAPS
-                make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, heatmap_cal_stats)
-                rb_dfs.append(route_df)
-            else:
-                print('no new '+act_type[:-1]+' activities')
-    
+                 make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, heatmap_cal_stats)
+                 rb_dfs.append(route_df)
+
     ## for LOCAL - mac / linux / windows - workflow
     else: 
         cloudlocal = 'local'
         postgres_db = 'activities'
         run_files, bike_files = tcx_to_postgres(tcx_files = [os.path.join(out_dir, i) for i in sorted(os.listdir(out_dir)) if i.endswith('.tcx')],  db = postgres_db)
-        for act_type in ['bikes', 'runs']:
-            if act_type == 'runs':
-                new_act_files = run_files
-            elif act_type == 'bikes':
-                new_act_files = bike_files
+        act_d = {'bikes': bike_files, 'runs': run_files}
+        for act_type in act_d:
+            new_act_files = act_d.get(act_type)
+            print(new_act_files)
             ## only make maps if there are new files to add 
-            if len(new_act_files) > 0:
+            if len(new_act_files) == 0:
+                print('no new '+act_type[:-1]+' activities')
+            else:
                 ## select all run|bike activities
                 date_df = postgres_to_df('SELECT * FROM '+act_type[:-1]+'_stats;', db = postgres_db)
                 ## parse/add gpx files that are new to postgres db
@@ -698,8 +685,6 @@ def main():
                 ## CREATE MAPS
                 make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, heatmap_cal_stats)
                 rb_dfs.append(route_df)
-            else:
-                print('no new '+act_type[:-1]+' activities')
 
     ## LOCAL + CLOUD: create combined bike+runs route heatmap if run + bikes both have activities within those days 
     if (len(rb_dfs) == 2 and(len(rb_dfs[0]) > 0 and len(rb_dfs[-1]) > 0)): 
@@ -718,7 +703,6 @@ def main():
     time_min = (stop_time - start_time)/60
     print(str(days_b4_today), ' days took ', str(time_min), ' minutes')
 ######################################################################
-
 
 if __name__ == "__main__":
     main()       
