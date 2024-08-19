@@ -30,7 +30,6 @@ from datetime import datetime, timedelta, date, timezone
 ## under GEO, for transform_point_coords
 from pyproj import Proj, transform
 ## parsing TCX/GPX functions
-import gpxpy
 from tcxreader.tcxreader import TCXReader
 import psycopg2
 ## route heatmap
@@ -41,6 +40,8 @@ import plotly.express as px
 ## under RUNNING ACTIVITIES, cal_heatmap function
 import matplotlib.pyplot as plt
 import calplot ## https://github.com/tomkwok/calplot.git (pip install calplot)
+import time
+
 
 class Garmin:
     """
@@ -321,6 +322,16 @@ def tcx_to_df(tcx_files, subtr_hrs=6):
     return (run_df, bike_df)
 
 def gpx_to_df(files):
+    '''for google colab workflow -- faster than parse_gpx function, but only ele extracted (no speed), and doesn't split files'''
+    df = pd.DataFrame(columns=['date', 'filename', 'lat', 'lon', 'ele', 'speed'])
+    for fi in files:
+        gpx = gpd.read_file(fi, layer='track_points')
+        for k, v in gpx.iterrows():
+          df.loc[len(df.index)] = [v.time, os.path.basename(fi), v.geometry.y, v.geometry.x, gpx.ele, 0]
+    df['date'] = [str(i).split('+')[0] for i in df['date']]
+    return df.sort_values('date')
+
+def parse_gpx(files):
     df = pd.DataFrame(columns=['date', 'filename', 'lat', 'lon', 'ele', 'speed'])
     for fi in files:
         gpx_file = open(fi, 'r')
@@ -568,9 +579,9 @@ def make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, h
         if len(heatmap_sub) > 0:
             plot_heatmap(df = heatmap_sub, out_name = os.path.join(running_fig_dir, 'HeatMap_'+act_type+'.html'), subset = 1) 
         else:
-            print('No '+act_type+' activities within those bounds')
+            print('Not creating RouteMap for '+act_type+'. No activities within those bounds')
     else:
-        print('No '+act_type+' activities')
+        print('Not creating RouteMap for '+act_type+'. No activities within user input days')
 
     ## only create ii) 3D map for a square-ish subset of area (from .gpx files per activity type within bounds)
     if (len(bounds) > 0 and len(route_df) > 0):
@@ -579,9 +590,9 @@ def make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, h
         if len(df_sub) > 0:
             plot_3d(df = df_sub, out_fi = os.path.join(running_fig_dir, 'Route3D_'+act_type+'.html'), subset = 1) 
         else:
-          print('No '+act_type+' activities within those bounds')
+          print('Not creating 3D Map for '+act_type+'. No activities within those bounds')
     elif (len(bounds) > 0 and len(route_df) == 0):
-          print('No '+act_type+'  activities')
+          print('Not creating 3D Map for '+act_type+'. No activities within user input days')
 
     else:
         print('in https://geojson.io/: draw square over an area to map in 3D ')
@@ -598,6 +609,9 @@ def make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, h
 ######################################################################
 
 def main():
+    start_time = time.time()
+
+
     ## parse user input params / instead of sourse config_file.sh
     df = pd.read_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'params.csv'))
     days_b4_today, hm_bounds, bounds, hcs, running_fig_dir, archive_dir = [str(i) for i in df['User Input']]
@@ -636,6 +650,7 @@ def main():
         bike_files = bike_df['filename']
     ## for LOCAL - mac / linux / windows - workflow
     else: 
+        import gpxpy
         cloudlocal = 'local'
         postgres_db = 'activities'
         run_files, bike_files = tcx_to_postgres(tcx_files = [os.path.join(out_dir, i) for i in sorted(os.listdir(out_dir)) if i.endswith('.tcx')],  db = postgres_db)
@@ -686,6 +701,9 @@ def main():
     if len(os.listdir(out_dir)) == 0:
         shutil.rmtree(out_dir)
 
+    stop_time = time.time()
+    time_min = (stop_time - start_time)/60
+    print(str(days_b4_today), ' days took ', str(time_min), ' minutes')
 ######################################################################
 
 
