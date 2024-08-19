@@ -30,6 +30,7 @@ from datetime import datetime, timedelta, date, timezone
 ## under GEO, for transform_point_coords
 from pyproj import Proj, transform
 ## parsing TCX/GPX functions
+import gpxpy
 from tcxreader.tcxreader import TCXReader
 import psycopg2
 ## route heatmap
@@ -615,7 +616,9 @@ def make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, h
 def main():
     start_time = time.time()
 
-
+    ## initialize list to put df's of running and biking routes 
+    rb_dfs=[] 
+    
     ## parse user input params / instead of sourse config_file.sh
     df = pd.read_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'params.csv'))
     days_b4_today, hm_bounds, bounds, hcs, running_fig_dir, archive_dir = [str(i) for i in df['User Input']]
@@ -648,50 +651,60 @@ def main():
     if (os.getcwd().startswith("/content/") and type(days_b4_today) == type(1)): 
         cloudlocal = 'cloud'
         run_df, bike_df = tcx_to_df(tcx_files = [os.path.join(out_dir, i) for i in sorted(os.listdir(out_dir)) if i.endswith('.tcx')])
+        if len(run_df) > 0:
+            run_df.to_csv(os.path.join(out_dir, "run_stats_" + os.path.basename(out_dir) + ".csv"))
+        else:
+            print('no new run activities')
+        if len(bike_df) > 0:
+            bike_df.to_csv(os.path.join(out_dir, "bike_stats_" + os.path.basename(out_dir) + ".csv"))
+            print('no new bike activities')
+            
+        for act_type in ['bikes', 'runs']:
+            if act_type == 'runs':
+                new_act_files = run_df['filename'].to_list()
+                date_df = run_df 
+            elif act_type == 'bikes':
+                new_act_files = bike_df['filename'].to_list()
+                date_df = bike_df
+            else:
+                print('no new files to add')
+            if len(new_act_files) > 0:
+                route_df = gpx_to_df(files = [os.path.join(out_dir, i.replace('.tcx', '.gpx')) for i in new_act_files] )
+                route_df.to_csv(os.path.join(out_dir, act_type[:-1] + "_routes_" + os.path.basename(out_dir) + ".csv"))
+                ## CREATE MAPS
+                make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, heatmap_cal_stats)
+                rb_dfs.append(route_df)
+            else:
+                print('no new '+act_type[:-1]+' activities')
+    
     ## for LOCAL - mac / linux / windows - workflow
     else: 
-        import gpxpy
         cloudlocal = 'local'
         postgres_db = 'activities'
         run_files, bike_files = tcx_to_postgres(tcx_files = [os.path.join(out_dir, i) for i in sorted(os.listdir(out_dir)) if i.endswith('.tcx')],  db = postgres_db)
-
-    ## initialize list to put df's of running and biking routes 
-    rb_dfs=[]        
-    ## parse all activities that are running and/or biking - save files to csv 
-    for act_type in ['bikes', 'runs']:
-        if (act_type == 'runs' and len(run_df) > 0):
-            parse_new = run_df['filename']
-        elif (act_type == 'bikes' and len(bike_df) > 0):
-            parse_new = bike_df['filename']
-        else:
-            print('no new '+act_type+' to parse')
-            parse_new=[]
-        if len(parse_new) >= 1:
-            if cloudlocal == 'cloud':
-                if act_type=='runs':
-                    date_df = run_df
-                elif act_type == 'bikes':
-                    date_df = bike_df
-                ## use tcx filenames to only parse those gpx files 
-                date_df.to_csv(os.path.join(out_dir, act_type[:-1] + "_stats_" + os.path.basename(out_dir) + ".csv"))
-                route_df = gpx_to_df(files = [os.path.join(out_dir, i.replace('.tcx', '.gpx')) for i in parse_new] )
-                route_df.to_csv(os.path.join(out_dir, act_type[:-1] + "_routes_" + os.path.basename(out_dir) + ".csv"))
-            elif cloudlocal == 'local':
-                gpx_to_postgres(gpx_files = [os.path.join(out_dir, i.replace('.tcx', '.gpx')) for i in parse_new], 
-                                table_name = 'route_'+act_type,  db = postgres_db)   
-                ## select all activity_type route files in archive db
+        for act_type in ['bikes', 'runs']:
+            if act_type == 'runs':
+                new_act_files = run_files
+            elif act_type == 'bikes':
+                new_act_files = bike_files
+            ## only make maps if there are new files to add 
+            if len(new_act_files) > 0:
+                ## select all run|bike activities
+                date_df = postgres_to_df('SELECT * FROM '+act_type[:-1]+'_stats;', db = postgres_db)
+                ## parse/add gpx files that are new to postgres db
+                gpx_to_postgres(gpx_files = [os.path.join(out_dir, i.replace('.tcx', '.gpx')) for i in new_act_files] ,  table_name = 'route_'+act_type,  db = postgres_db)
+                ## select all route points 
                 route_df = postgres_to_df("SELECT * FROM route_"+act_type+";", db = postgres_db)
-                ## select all activity_type date/stat files in archive db
-                date_df = postgres_to_df("SELECT * FROM "+act_type[:-1]+"_stats", db = postgres_db)
-                
-            ## CREATE MAPS
-            make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, heatmap_cal_stats)
-            rb_dfs.append(route_df)
+                ## CREATE MAPS
+                make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, heatmap_cal_stats)
+                rb_dfs.append(route_df)
+            else:
+                print('no new '+act_type[:-1]+' activities')
 
-        ## LOCAL + CLOUD: create combined bike+runs route heatmap if run + bikes both have activities within those days 
-        if (len(rb_dfs) == 2 and(len(rb_dfs[0]) > 0 and len(rb_dfs[-1]) > 0)): 
-            plot_routemaps(run_df = rb_dfs[0], bike_df = rb_dfs[-1], 
-                           out_name = os.path.join(running_fig_dir, 'HeatMap_run_bike.html')) 
+    ## LOCAL + CLOUD: create combined bike+runs route heatmap if run + bikes both have activities within those days 
+    if (len(rb_dfs) == 2 and(len(rb_dfs[0]) > 0 and len(rb_dfs[-1]) > 0)): 
+        plot_routemaps(run_df = rb_dfs[0], bike_df = rb_dfs[-1], 
+                       out_name = os.path.join(running_fig_dir, 'HeatMap_run_bike.html')) 
 
     ## LOCAL + CLOUD: ARCHIVE
     ## move all of the activity files themselves .gpx, .tcx in to 'archive' folder
