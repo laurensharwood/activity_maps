@@ -327,7 +327,7 @@ def gpx_to_df(files):
     for fi in files:
         gpx = gpd.read_file(fi, layer='track_points')
         for k, v in gpx.iterrows():
-          df.loc[len(df.index)] = [v.time, os.path.basename(fi), v.geometry.y, v.geometry.x, gpx.ele, 0]
+          df.loc[len(df.index)] = [v.time, os.path.basename(fi), v.geometry.y, v.geometry.x, v.ele, 0]
     df['date'] = [str(i).split('+')[0] for i in df['date']]
     return df.sort_values('date')
 
