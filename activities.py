@@ -1,4 +1,3 @@
-77% of storage used … If you run out, you can't create, edit, and upload files. Get 100 GB of storage for $1.99 $0.49 for 1 month.
 #!/usr/bin/ python
 
 """
@@ -397,12 +396,13 @@ def gpx_to_postgres(gpx_files, table_name, db, usr='postgres', pwd='', host='loc
                         for seg in track.segments:
                             for point_no, pt in enumerate(seg.points):
                                 ## add _2 to filename if consecutive trackpoints are more than X minutes apart 
-                                run_parts = split_gpx_at(fi = fi, split_min = 45)
-                                for run_part in [i for i in run_parts if len(i) > 0]:
-                                    for trackpt in run_part:
-                                        trackpt[0] = trackpt[0].strftime("%Y-%m-%d %H:%M:%S")
-                                        cur.execute('INSERT INTO '+table_name+' (date, filename, lat, lon, ele, speed) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING',
-                                                  [str(i) for i in trackpt])
+                                cur.execute('INSERT INTO '+table_name+' (date, filename, lat, lon, ele, speed) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING',
+                                                  [str(i) for i in [pt.time, os.path.basename(fi), pt.latitude, pt.longitude, pt.elevation, 0]])
+                                # run_parts = split_gpx_at(fi = fi, split_min = 45)
+                                # for run_part in [i for i in run_parts if len(i) > 0]:
+                                #     for trackpt in run_part:
+                                #         trackpt[0] = trackpt[0].strftime("%Y-%m-%d %H:%M:%S")
+                                        
                 conn.commit()
             print('Records successfully inserted into '+table_name+' table within '+db+' db')
     except (Exception, psycopg2.Error) as error:
@@ -487,6 +487,7 @@ def postgres_to_df(SQL_query, db, usr='postgres', pwd='', host='localhost', port
         print('Error while fetching data from PostgreSQL', error)
         conn.close()
         print('PostgreSQL connection to '+str(db)+'is closed')
+
 
 ################################
 ## RUNNING PLOTS
@@ -573,6 +574,7 @@ def cal_heatmap(df, col_name, mpl_cmap, out_name):
     plt.savefig(out_name)
     return cal_fig[0]
 
+
 def make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, heatmap_cal_stats):
     ## i) create route heatmap (from .gpx files per activity type in archive directory)
     if (hm_bounds == 'nan' and len(route_df) > 0):
@@ -586,6 +588,7 @@ def make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, h
             print('Not creating RouteMap for '+act_type+'. No activities within those bounds')
     else:
         print('Not creating RouteMap for '+act_type+'. No activities within user input days')
+
     ## only create ii) 3D map for a square-ish subset of area (from .gpx files per activity type within bounds)
     if (len(bounds) > 0 and len(route_df) > 0):
         min_lon, max_lon, min_lat, max_lat = [float(i.replace(" ", "")) for i in str(bounds).split(',')]
@@ -596,9 +599,11 @@ def make_maps(route_df, date_df, hm_bounds, bounds, running_fig_dir, act_type, h
           print('Not creating 3D Map for '+act_type+'. No activities within those bounds')
     elif (len(bounds) > 0 and len(route_df) == 0):
           print('Not creating 3D Map for '+act_type+'. No activities within user input days')
+
     else:
         print('in https://geojson.io/: draw square over an area to map in 3D ')
         print('Provide a square-ish bounding box region -- min lon, max lon, min lat, max lat -- for the 3D map')
+
     ## iii) heatmap calendar (from .tcx files per activity type in archive directory)
     for heatmap_cal_stat in heatmap_cal_stats:
         if len(date_df) > 1:
@@ -633,8 +638,7 @@ def main():
     ## if the first user input parameter can be an integer, download garmin activity files
     try:
         days_b4_today = int(days_b4_today)
-        out_dir = "20240819"
-        ## out_dir =  get_garmin(num_days = days_b4_today,  project_dir = os.path.dirname(os.path.abspath(__file__)),  file_types = ['.tcx', '.gpx'])
+        out_dir =  get_garmin(num_days = days_b4_today,  project_dir = os.path.dirname(os.path.abspath(__file__)),  file_types = ['.tcx', '.gpx'])
     ## or if it's a string, make that out_dir (a place where activity files to be parsed are located) 
     except:
         if os.path.exists(str(days_b4_today)):
