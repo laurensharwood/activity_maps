@@ -635,8 +635,7 @@ def main():
     ## if the first user input parameter can be an integer, download garmin activity files
     try:
         days_b4_today = int(days_b4_today)
-       # out_dir =  get_garmin(num_days = days_b4_today,  project_dir = os.path.dirname(os.path.abspath(__file__)),  file_types = ['.tcx', '.gpx'])
-        out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '20240819')
+        out_dir =  get_garmin(num_days = days_b4_today,  project_dir = os.path.dirname(os.path.abspath(__file__)),  file_types = ['.tcx', '.gpx'])
     ## or if it's a string, make that out_dir (a place where activity files to be parsed are located) 
     except:
         if os.path.exists(str(days_b4_today)):
