@@ -395,14 +395,14 @@ def gpx_to_postgres(gpx_files, table_name, db, usr='postgres', pwd='', host='loc
                     for track in gpx.tracks:
                         for seg in track.segments:
                             for point_no, pt in enumerate(seg.points):
+                                if pt.speed != None:
+                                    speed = pt
+                                elif point_no > 0:
+                                    speed = pt.speed_between(seg.points[point_no - 1])
+                                else:
+                                    speed = 0
                                 ## add _2 to filename if consecutive trackpoints are more than X minutes apart 
-                                cur.execute('INSERT INTO '+table_name+' (date, filename, lat, lon, ele, speed) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING',
-                                                  [str(i) for i in [pt.time, os.path.basename(fi), pt.latitude, pt.longitude, pt.elevation, 0]])
-                                # run_parts = split_gpx_at(fi = fi, split_min = 45)
-                                # for run_part in [i for i in run_parts if len(i) > 0]:
-                                #     for trackpt in run_part:
-                                #         trackpt[0] = trackpt[0].strftime("%Y-%m-%d %H:%M:%S")
-                                        
+                                cur.execute('INSERT INTO '+table_name+' (date, filename, lat, lon, ele, speed) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING', [str(i) for i in [pt.time, os.path.basename(fi), pt.latitude, pt.longitude, pt.elevation, speed]])
                 conn.commit()
             print('Records successfully inserted into '+table_name+' table within '+db+' db')
     except (Exception, psycopg2.Error) as error:
@@ -527,9 +527,9 @@ def plot_routemaps(run_df, bike_df, out_name):
         runs_xy.append(list(zip(route_lats, route_lons)))
     bikes_xy = []
     for kk, vv in bike_df.groupby(['filename']):
-        route_lats = vv['lat'].to_list()
-        route_lons = vv['lon'].to_list()
-        bikes_xy.append(list(zip(route_lats, route_lons)))
+        broute_lats = vv['lat'].to_list()
+        broute_lons = vv['lon'].to_list()
+        bikes_xy.append(list(zip(broute_lats, broute_lons)))
     ## create folium map 
     heatmap = folium.Map(location=[float((np.mean(bike_df['lat'])+np.mean(run_df['lat']))/2), float((np.mean(bike_df['lon'])+np.mean(run_df['lon']))/2)], 
                          control_scale=False, zoom_start=7)
@@ -542,10 +542,10 @@ def plot_routemaps(run_df, bike_df, out_name):
     # cluster2 = plugins.HeatMap(data=[[la, lo] for la, lo in zip(bike_df.lat, bike_df.lon)], name='heatmap', min_opacity=0.15, max_zoom=10,  radius=9, blur=8)
     # heatmap.add_child(cluster2)
     ## lines
-    fg1 = folium.FeatureGroup('running routes')
-    fg2 = folium.FeatureGroup('biking routes')
-    folium.PolyLine(locations=runs_xy, weight=0.9, opacity = 0.7, color = 'red', control = True, show = True).add_to(fg1)
-    folium.PolyLine(locations=bikes_xy, weight=0.9, opacity = 0.7, color = 'blue', control = True, show = True).add_to(fg2)
+    fg1 = folium.FeatureGroup('biking routes')
+    fg2 = folium.FeatureGroup('running routes')
+    folium.PolyLine(locations=bikes_xy, weight=0.9, opacity = 0.7, color = 'blue', control = True, show = True).add_to(fg1)
+    folium.PolyLine(locations=runs_xy, weight=0.9, opacity = 0.7, color = 'red', control = True, show = True).add_to(fg2)
     fg1.add_to(heatmap)
     fg2.add_to(heatmap)
     ## extra
@@ -691,8 +691,8 @@ def main():
                 rb_dfs.append(route_df)
 
     ## LOCAL + CLOUD: create combined bike+runs route heatmap if run + bikes both have activities within those days 
-    if (len(rb_dfs) == 2 and(len(rb_dfs[0]) > 0 and len(rb_dfs[-1]) > 0)): 
-        plot_routemaps(run_df = rb_dfs[-1], bike_df = rb_dfs[0], 
+    if (len(rb_dfs) == 2 and(len(rb_dfs[0]) > 0 and len(rb_dfs[1]) > 0)): 
+        plot_routemaps(run_df = rb_dfs[1], bike_df = rb_dfs[0], 
                        out_name = os.path.join(running_fig_dir, 'HeatMap_run_bike.html')) 
 
     ## LOCAL + CLOUD: ARCHIVE
