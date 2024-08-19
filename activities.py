@@ -331,7 +331,7 @@ def gpx_to_df(files):
     for fi in files:
         gpx = gpd.read_file(fi, layer='track_points')
         for k, v in gpx.iterrows():
-          df.loc[len(df.index)] = [v.time, os.path.basename(fi), v.geometry.y, v.geometry.x, v.ele, 0]
+          df.loc[len(df.index)] = [v.time.astype('datetime64[ns]'), os.path.basename(fi), v.geometry.y, v.geometry.x, v.ele, 0]
     df['date'] = [str(i).split('+')[0] for i in df['date']]
     return df.sort_values('date')
 
@@ -635,9 +635,8 @@ def main():
     ## if the first user input parameter can be an integer, download garmin activity files
     try:
         days_b4_today = int(days_b4_today)
-        out_dir =  get_garmin(num_days = days_b4_today, 
-                              project_dir = os.path.dirname(os.path.abspath(__file__)), 
-                              file_types = ['.tcx', '.gpx'])
+       # out_dir =  get_garmin(num_days = days_b4_today,  project_dir = os.path.dirname(os.path.abspath(__file__)),  file_types = ['.tcx', '.gpx'])
+        out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '20240819')
     ## or if it's a string, make that out_dir (a place where activity files to be parsed are located) 
     except:
         if os.path.exists(str(days_b4_today)):
@@ -650,8 +649,6 @@ def main():
     if (os.getcwd().startswith("/content/") and type(days_b4_today) == type(1)): 
         cloudlocal = 'cloud'
         run_df, bike_df = tcx_to_df(tcx_files = [os.path.join(out_dir, i) for i in sorted(os.listdir(out_dir)) if i.endswith('.tcx')])
-        run_files = run_df['filename']
-        bike_files = bike_df['filename']
     ## for LOCAL - mac / linux / windows - workflow
     else: 
         import gpxpy
@@ -663,10 +660,10 @@ def main():
     rb_dfs=[]        
     ## parse all activities that are running and/or biking - save files to csv 
     for act_type in ['bikes', 'runs']:
-        if (act_type == 'runs' and len(run_files) > 0):
-            parse_new = run_files
-        elif (act_type == 'bikes' and len(bike_files) > 0):
-            parse_new = bike_files
+        if (act_type == 'runs' and len(run_df) > 0):
+            parse_new = run_df['filename']
+        elif (act_type == 'bikes' and len(bike_df) > 0):
+            parse_new = bike_df['filename']
         else:
             print('no new '+act_type+' to parse')
             parse_new=[]
@@ -677,9 +674,9 @@ def main():
                 elif act_type == 'bikes':
                     date_df = bike_df
                 ## use tcx filenames to only parse those gpx files 
-                date_df.to_csv(os.path.join(out_dir, "TCX_" + act_type + "_" + os.path.basename(out_dir) + ".csv"))
+                date_df.to_csv(os.path.join(out_dir, act_type[:-1] + "_stats_" + os.path.basename(out_dir) + ".csv"))
                 route_df = gpx_to_df(files = [os.path.join(out_dir, i.replace('.tcx', '.gpx')) for i in parse_new] )
-                route_df.to_csv(os.path.join(out_dir, "GPX_" + act_type + "_" + os.path.basename(out_dir) + ".csv"))
+                route_df.to_csv(os.path.join(out_dir, act_type[:-1] + "_routes_" + os.path.basename(out_dir) + ".csv"))
             elif cloudlocal == 'local':
                 gpx_to_postgres(gpx_files = [os.path.join(out_dir, i.replace('.tcx', '.gpx')) for i in parse_new], 
                                 table_name = 'route_'+act_type,  db = postgres_db)   
