@@ -536,11 +536,6 @@ def plot_routemaps(run_df, bike_df, out_name):
     ## add basemap
     tile = folium.TileLayer(tiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
                             attr = 'ESRI', name = 'ESRI Satellite', overlay = True, control = True, show = True).add_to(heatmap)
-    ## clusters 
-    # cluster = plugins.HeatMap(data=[[la, lo] for la, lo in zip(run_df.lat, run_df.lon)], name='heatmap', min_opacity=0.15, max_zoom=10,  radius=9, blur=8)
-    # heatmap.add_child(cluster)
-    # cluster2 = plugins.HeatMap(data=[[la, lo] for la, lo in zip(bike_df.lat, bike_df.lon)], name='heatmap', min_opacity=0.15, max_zoom=10,  radius=9, blur=8)
-    # heatmap.add_child(cluster2)
     ## lines
     fg1 = folium.FeatureGroup('biking routes')
     fg2 = folium.FeatureGroup('running routes')
