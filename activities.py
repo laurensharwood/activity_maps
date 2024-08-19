@@ -565,7 +565,7 @@ def cal_heatmap(df, col_name, mpl_cmap, out_name):
     df['Year'] = [int(str(i).split('-')[0]) for i in df['start'].astype(str)]
     df = df.sort_values('start')
     events = pd.Series([i for i in df[col_name]],
-                       index=[i for i in  df['start'].astype('datetime64[ns]') - timedelta(hours=6)])
+                       index=[i for i in  df['start'].astype('datetime64[ns]')])
     cal_fig = calplot.calplot(events, suptitle='running '+col_name+' per day', cmap=mpl_cmap, colorbar=True, yearlabel_kws={'fontname':'sans-serif'})
     plt.savefig(out_name)
     return cal_fig[0]
