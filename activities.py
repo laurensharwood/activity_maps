@@ -351,7 +351,7 @@ def parse_gpx(files):
                     else:
                         speed = 0
                     df.loc[len(df.index)] = [pt.time, os.path.basename(fi), pt.latitude, pt.longitude, pt.elevation, speed]
-    df['date'] = [str(i).split('+')[0] for i in df['date']]
+    df['date'] = [str(i).split('+')[0] for i in df['date'].astype('datetime64[ns]') - timedelta(hours=6)]
     return df.sort_values('date')
 
 def split_gpx_at(fi, split_min):
@@ -526,9 +526,9 @@ def plot_routemaps(run_df, bike_df, out_name):
         route_lons = v['lon'].to_list()
         runs_xy.append(list(zip(route_lats, route_lons)))
     bikes_xy = []
-    for k, v in bike_df.groupby(['filename']):
-        route_lats = v['lat'].to_list()
-        route_lons = v['lon'].to_list()
+    for kk, vv in bike_df.groupby(['filename']):
+        route_lats = vv['lat'].to_list()
+        route_lons = vv['lon'].to_list()
         bikes_xy.append(list(zip(route_lats, route_lons)))
     ## create folium map 
     heatmap = folium.Map(location=[float((np.mean(bike_df['lat'])+np.mean(run_df['lat']))/2), float((np.mean(bike_df['lon'])+np.mean(run_df['lon']))/2)], 
@@ -692,7 +692,7 @@ def main():
 
     ## LOCAL + CLOUD: create combined bike+runs route heatmap if run + bikes both have activities within those days 
     if (len(rb_dfs) == 2 and(len(rb_dfs[0]) > 0 and len(rb_dfs[-1]) > 0)): 
-        plot_routemaps(run_df = rb_dfs[0], bike_df = rb_dfs[-1], 
+        plot_routemaps(run_df = rb_dfs[-1], bike_df = rb_dfs[0], 
                        out_name = os.path.join(running_fig_dir, 'HeatMap_run_bike.html')) 
 
     ## LOCAL + CLOUD: ARCHIVE
