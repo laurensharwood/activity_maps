@@ -651,10 +651,10 @@ def main():
         for act_type in act_d:
             date_df = act_d.get(act_type)
             new_act_files = date_df['filename'].to_list()
-            print('new ', act_type[:-1], ' activity files: ', new_act_files)
+            print('New ', act_type[:-1], ' activity files: ', new_act_files)
             ## only make maps if there are new files to add 
             if len(new_act_files) == 0:
-                print('no new '+act_type[:-1]+' activity files-- not creating maps')
+                print('No new '+act_type[:-1]+' activity files-- not creating maps')
             else:
                  route_df = gpx_to_df(files = [os.path.join(out_dir, i.replace('.tcx', '.gpx')) for i in new_act_files] )
                  date_df.to_csv(os.path.join(out_dir, act_type[:-1]+"_stats_" + os.path.basename(out_dir) + ".csv"))
@@ -671,10 +671,10 @@ def main():
         act_d = {'bikes': bike_files, 'runs': run_files}
         for act_type in act_d:
             new_act_files = act_d.get(act_type)
-            print('new ', act_type[:-1], ' activity files: ', new_act_files)
+            print('New ', act_type[:-1], ' activity files: ', new_act_files)
             ## only make maps if there are new files to add 
             if len(new_act_files) == 0:
-                print('no new '+act_type[:-1]+' activity files-- not creating maps')
+                print('No new '+act_type[:-1]+' activity files-- not creating maps')
             else:
                 ## select all run|bike activities
                 date_df = postgres_to_df('SELECT * FROM '+act_type[:-1]+'_stats;', db = postgres_db)
