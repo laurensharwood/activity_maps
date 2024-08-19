@@ -40,7 +40,11 @@ import plotly.express as px
 ## under RUNNING ACTIVITIES, cal_heatmap function
 import matplotlib.pyplot as plt
 import calplot ## https://github.com/tomkwok/calplot.git (pip install calplot)
+
 import time
+
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 class Garmin:
