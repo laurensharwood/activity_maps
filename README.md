@@ -129,17 +129,16 @@ cur.close()
 Function to split GPX files at X minutes:  
 ~~~
 def split_gpx_at(fi, split_min):
-    '''adds _2 to the file name where the time between two waypoints is greater than split_min. returns two items where the second item is empty if the file wasn't split'''
+    '''adds _2 to the file name where the time between two waypoints is greater than split_min. returns two items where the second item is empty if the file wasn't split'''    
     gpx_file = open(fi, 'r')
     gpx = gpxpy.parse(gpx_file, version='1.1')
     trackpoints = []
     trackpoints2 = []
+    first_part = True
     for track in gpx.tracks:
         for seg in track.segments:
             for point_no, pt in enumerate(seg.points):
-                first_part = True
                 if point_no == 0:
-                    ## set speed to 0 for first point (initially None)
                     trackpoints.append([pt.time, os.path.basename(fi), pt.latitude, pt.longitude, pt.elevation, 0]) 
                 elif point_no > 0:
                     speed = pt.speed_between(seg.points[point_no - 1])
@@ -147,10 +146,14 @@ def split_gpx_at(fi, split_min):
                     minutes = secs_btwn.total_seconds() / 60
                     if (minutes < split_min and first_part == True):
                         trackpoints.append([pt.time, os.path.basename(fi), pt.latitude, pt.longitude, pt.elevation, speed])
-                    elif (minutes > split_min or first_part == False):
+                    elif (minutes >= split_min and first_part == True):
                         trackpoints2.append([pt.time, os.path.basename(fi.replace(".gpx", "_2.gpx")), pt.latitude, pt.longitude, pt.elevation, speed])
                         first_part = False
-                     
+                    elif (minutes < split_min and first_part == False):
+                        trackpoints2.append([pt.time, os.path.basename(fi.replace(".gpx", "_2.gpx")), pt.latitude, pt.longitude, pt.elevation, speed])
+                    else:
+                        print('split again')
+                        
     return (trackpoints, trackpoints2)
 ~~~
 
