@@ -165,7 +165,7 @@ pwd=''
 host='localhost'
 port=5432
 
-#######
+####### do not change below
 
 gpx_files = [os.path.join(archive_dir, i) for i in os.listdir(archive_dir) if i.endswith(".gpx")]
 try:
@@ -188,4 +188,32 @@ finally:
     if conn:
         conn.close()
         print('PostgreSQL connection to '+db+' is closed')
+~~~
+
+
+
+Create a [View](https://laurensharwood.github.io/geospatial-toolbook/tlbook_4_database.html#views): 
+~~~
+view_name = 'SB_routes'
+table_name = 'route_runs'
+
+####### do not change below
+
+df = pd.read_csv( 'params.csv')
+days_b4_today, hm_bounds, bounds, hcs, running_fig_dir, archive_dir = [str(i) for i in df['User Input']]
+
+min_lon, max_lon, min_lat, max_lat = [float(i.replace(" ", "")) for i in str(bounds).split(',')]
+spatial_subset = " AND ".join(['WHERE lat >= '+str(min_lat), 'lat <= '+str(max_lat), 'lon >= '+str(min_lon), 'lon <= '+str(max_lon)])
+spat_sub_view = " ".join(["CREATE VIEW", view_name, "AS SELECT * FROM", table_name, spatial_subset+";"])
+try:
+    with psycopg2.connect(database = db, user = usr, password = pwd, host = host, port = port) as conn:
+        with conn.cursor() as cur:
+            cur.execute(spat_sub_view)
+            conn.commit()
+except (Exception, psycopg2.Error) as error:
+    print('Error inserting data into ', db, 'PostgreSQL', error)
+finally:
+    if conn:
+        conn.close()
+        print('PostgreSQL connection to '+db+' is closed')   
 ~~~
