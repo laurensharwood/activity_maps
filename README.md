@@ -123,3 +123,69 @@ for k in table_column_dict:
 conn.close()
 cur.close()
 ~~~
+
+
+
+Function to split GPX files at X minutes:  
+~~~
+def split_gpx_at(fi, split_min):
+    '''adds _2 to the file name where the time between two waypoints is greater than split_min. returns two items where the second item is empty if the file wasn't split'''
+    gpx_file = open(fi, 'r')
+    gpx = gpxpy.parse(gpx_file, version='1.1')
+    trackpoints = []
+    trackpoints2 = []
+    for track in gpx.tracks:
+        for seg in track.segments:
+            for point_no, pt in enumerate(seg.points):
+                first_part = True
+                if point_no == 0:
+                    ## set speed to 0 for first point (initially None)
+                    trackpoints.append([pt.time, os.path.basename(fi), pt.latitude, pt.longitude, pt.elevation, 0]) 
+                elif point_no > 0:
+                    speed = pt.speed_between(seg.points[point_no - 1])
+                    secs_btwn = pt.time - seg.points[point_no - 1].time
+                    minutes = secs_btwn.total_seconds() / 60
+                    if (minutes < split_min and first_part == True):
+                        trackpoints.append([pt.time, os.path.basename(fi), pt.latitude, pt.longitude, pt.elevation, speed])
+                    elif (minutes > split_min or first_part == False):
+                        trackpoints2.append([pt.time, os.path.basename(fi.replace(".gpx", "_2.gpx")), pt.latitude, pt.longitude, pt.elevation, speed])
+                        first_part = False
+                     
+    return (trackpoints, trackpoints2)
+~~~
+
+Delete old activity then add split activity to postgres database:  
+~~~
+table_name = 'activity_stats'
+archive_dir = "garmin_archive"
+
+db = 'activities'
+usr='postgres'
+pwd=''
+host='localhost'
+port=5432
+
+#######
+
+gpx_files = [os.path.join(archive_dir, i) for i in os.listdir(archive_dir) if i.endswith(".gpx")]
+try:
+    with psycopg2.connect(database = db, user = usr, password = pwd, host = host, port = port) as conn:
+        with conn.cursor() as cur:
+            cur.execute("ALTER TABLE route_runs DROP CONSTRAINT route_runs_filename_fkey;")
+            for fi in gpx_files:
+                pt1, pt2 = split_gpx_at(fi, split_min=15)
+                if len(pt2) > 0:
+                    print(len(pt1), len(pt2))
+                    cur.execute("DELETE FROM run_stats WHERE activity_stats = '"+os.path.basename(fi).replace(".gpx", ".tcx")+"';")
+                    for i in pt1:
+                        cur.execute('INSERT INTO route_runs (date, filename, lat, lon, ele, speed) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING', i)
+                    for ii in pt2:
+                        cur.execute('INSERT INTO route_runs (date, filename, lat, lon, ele, speed) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING', ii)
+                    conn.commit()
+except (Exception, psycopg2.Error) as error:
+    print('Error inserting data into ', db, 'PostgreSQL', error)
+finally:
+    if conn:
+        conn.close()
+        print('PostgreSQL connection to '+db+' is closed')
+~~~
