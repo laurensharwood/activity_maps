@@ -1,4 +1,5 @@
 # Instructions to create maps of your running and biking activities (from Garmin Connect or Strava)
+*Notice a mistake? [LMK](https://github.com/laurensharwood/activity_maps/issues/new)*
 
 See the following [map outputs in interactive form](https://laurensharwood.github.io/) (Left to Right):     
    i) Running route heatmap (interactive)  
@@ -33,7 +34,6 @@ To <b>download Strava archive</b> if you don't know your Garmin Connect email + 
 
 ### See instructions below to run on the <ins>CLOUD</ins> (Google Colab compute and Google Drive storage) <ins>or</ins> your <ins>LOCAL</ins> machine using a [virtual environment](https://laurensharwood.github.io/geospatial-toolbook/tlbook_6_programming.html#virtual-environments).  
 
-*Notice a mistake? [LMK](https://github.com/laurensharwood/activity_maps/issues/new)*
 
 ---
 
